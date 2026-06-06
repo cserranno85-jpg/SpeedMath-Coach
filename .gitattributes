@@ -1,0 +1,14 @@
+﻿# Keep binary files binary-safe.
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+
+# Keep Gradle wrapper scripts platform-correct.
+android/gradlew text eol=lf
+android/gradlew.bat text eol=crlf
+*.properties text eol=lf
+*.gradle text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
