@@ -41,7 +41,16 @@ jobs:
       - name: Generate SpeedMath Coach brand assets
         run: npm run generate:brand-assets
 
-      - name: Verify PNG signatures
+      - name: Build Vite app
+        run: npm run build
+
+      - name: Generate Capacitor native assets
+        run: npx @capacitor/assets generate
+
+      - name: Sync Android Capacitor project
+        run: npx cap sync android
+
+      - name: Verify PNG signatures after asset generation
         shell: bash
         run: |
           node - <<'NODE'
@@ -105,15 +114,6 @@ jobs:
 
           console.log('All PNG files have valid PNG signatures.');
           NODE
-
-      - name: Build Vite app
-        run: npm run build
-
-      - name: Generate Capacitor native assets
-        run: npx @capacitor/assets generate
-
-      - name: Sync Android Capacitor project
-        run: npx cap sync android
 
       - name: Run mobile readiness verifier
         run: npm run verify:mobile
