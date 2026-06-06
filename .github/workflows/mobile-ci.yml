@@ -14,6 +14,9 @@ on:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   validate-mobile-project:
     name: Validate mobile project
@@ -26,7 +29,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Set up Java for Android tooling
@@ -124,3 +127,4 @@ jobs:
           name: speedmath-coach-dist
           path: dist
           if-no-files-found: error
+
