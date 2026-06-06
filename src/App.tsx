@@ -17,7 +17,7 @@ const DEFAULT_SETTINGS: Settings = {
     [Operation.MULTIPLICATION]: false,
     [Operation.DIVISION]: false,
   },
-  aiProgressiveHardening: false,
+  adaptiveDifficulty: false,
   gameDurationSeconds: 60,
 };
 
@@ -76,7 +76,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans tracking-tight flex items-center justify-center p-4 md:p-8 selection:bg-indigo-100 overflow-y-auto">
+    <div className="min-h-[100dvh] bg-slate-50 text-slate-900 font-sans tracking-tight flex items-center justify-center p-3 md:p-8 selection:bg-indigo-100 overflow-x-hidden w-full pb-safe pr-safe pl-safe pt-safe">
        
        {appState === 'MENU' && (
            <Menu 

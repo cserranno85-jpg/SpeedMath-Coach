@@ -21,58 +21,61 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
-       <div className="flex justify-between items-start mb-8">
+    <div className="w-full max-w-[430px] md:max-w-xl mx-auto bg-white rounded-3xl border border-slate-200/80 shadow-md p-5 sm:p-8 transition-all">
+       <div className="flex justify-between items-center mb-6 sm:mb-8">
          <div>
-           <h1 className="text-3xl font-bold leading-none text-slate-800 mb-2">SpeedMath Coach</h1>
-           <p className="text-xs text-slate-500 font-medium tracking-tight">Fast Math, Sharper Mind.</p>
+           <h1 className="text-2xl sm:text-3xl font-black leading-none text-slate-800 tracking-tight">SpeedMath Coach</h1>
+           <p className="text-[11px] sm:text-xs text-slate-500 font-semibold tracking-wide uppercase mt-1">Fast Math, Sharper Mind.</p>
          </div>
          <button 
            onClick={onViewStats}
-           className="p-3 bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 rounded-xl transition-colors"
+           className="p-3 bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 rounded-xl transition-all cursor-pointer shadow-sm active:scale-95"
            title="View Progress"
+           id="btn-stats"
          >
-           <BarChart2 className="w-6 h-6" />
+           <BarChart2 className="w-6 h-6 stroke-[2]" />
          </button>
        </div>
 
-       <div className="space-y-8">
+       <div className="space-y-6 sm:space-y-8">
          {/* Practice Mode */}
          <div>
-           <h3 className="text-[10px] font-bold text-slate-800 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2">
+           <h3 className="text-[11px] font-bold text-indigo-900/80 uppercase tracking-widest mb-3 border-b border-indigo-50/80 pb-1.5 font-mono">
              Practice Mode
            </h3>
-           <div className="grid grid-cols-2 gap-2">
+           <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2">
               <button
                  onClick={() => onSettingsChange({ ...settings, gameMode: GameMode.TIMED })}
-                 className={`py-3 px-4 rounded-lg font-bold text-sm transition-colors border ${settings.gameMode === GameMode.TIMED ? 'bg-indigo-600 border-indigo-700 text-white' : 'bg-slate-100 border-slate-200 text-slate-400 hover:border-slate-300'}`}
-               >
-                 Timed Drill
-               </button>
-               <button
+                 className={`py-3 px-4 rounded-xl font-bold text-sm transition-all border cursor-pointer active:scale-98 ${settings.gameMode === GameMode.TIMED ? 'bg-indigo-600 border-indigo-700 text-white shadow-md' : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                 id="mode-timed"
+              >
+                Timed Drill
+              </button>
+              <button
                  onClick={() => onSettingsChange({ ...settings, gameMode: GameMode.UNTIMED })}
-                 className={`py-3 px-4 rounded-lg font-bold text-sm transition-colors border ${settings.gameMode === GameMode.UNTIMED ? 'bg-indigo-600 border-indigo-700 text-white' : 'bg-slate-100 border-slate-200 text-slate-400 hover:border-slate-300'}`}
-               >
-                 Untimed Practice
-               </button>
+                 className={`py-3 px-4 rounded-xl font-bold text-sm transition-all border cursor-pointer active:scale-98 ${settings.gameMode === GameMode.UNTIMED ? 'bg-indigo-600 border-indigo-700 text-white shadow-md' : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                 id="mode-untimed"
+              >
+                Untimed Practice
+              </button>
            </div>
          </div>
 
          {/* Operations */}
          <div>
-           <h3 className="text-[10px] font-bold text-slate-800 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2 flex items-center gap-2">
-             <SettingsIcon className="w-4 h-4" /> Config
+           <h3 className="text-[11px] font-bold text-indigo-900/80 uppercase tracking-widest mb-3 border-b border-indigo-50/80 pb-1.5 flex items-center gap-1.5 font-mono">
+             <SettingsIcon className="w-3.5 h-3.5" /> Operations
            </h3>
-           <div className="grid grid-cols-2 gap-3">
+           <div className="grid grid-cols-2 gap-2">
              {Object.values(Operation).map((op) => (
-               <label key={op} className={`flex items-center gap-3 px-4 py-2 rounded-lg border cursor-pointer transition-colors text-sm font-bold ${settings.operations[op] ? 'bg-indigo-600 border-indigo-700 text-white' : 'bg-slate-100 border-slate-200 text-slate-400 hover:border-slate-300'}`}>
+               <label key={op} className={`flex items-center justify-center text-center px-3 py-3 rounded-xl border cursor-pointer transition-all text-sm font-bold active:scale-98 select-none ${settings.operations[op] ? 'bg-indigo-600 border-indigo-700 text-white shadow-md' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'}`}>
                  <input 
                    type="checkbox" 
                    className="sr-only" 
                    checked={settings.operations[op]}
                    onChange={() => toggleOperation(op)} 
                  />
-                 <span className="font-medium">{op.toLowerCase()}</span>
+                 <span className="capitalize">{op.toLowerCase()}</span>
                </label>
              ))}
            </div>
@@ -80,15 +83,15 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
 
          {/* Difficulty */}
          <div>
-           <h3 className="text-[10px] font-bold text-slate-800 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2">
-             Base Difficulty
+           <h3 className="text-[11px] font-bold text-indigo-900/80 uppercase tracking-widest mb-3 border-b border-indigo-50/80 pb-1.5 font-mono">
+             Difficulty
            </h3>
-           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+           <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
               {Object.values(Difficulty).map((diff) => (
                <button
                  key={diff}
                  onClick={() => onSettingsChange({ ...settings, difficulty: diff })}
-                 className={`py-2 px-3 rounded-lg font-bold text-sm transition-colors border ${settings.difficulty === diff ? 'bg-indigo-600 border-indigo-700 text-white' : 'bg-slate-100 border-slate-200 text-slate-400 hover:border-slate-300'}`}
+                 className={`py-2 px-2.5 rounded-lg font-bold text-xs transition-colors border cursor-pointer ${settings.difficulty === diff ? 'bg-indigo-600 border-indigo-700 text-white shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'}`}
                >
                  {diff}
                </button>
@@ -96,24 +99,26 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
            </div>
          </div>
 
-         {/* AI Progressive */}
-         <label className="flex items-start justify-between p-4 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer">
-           <div>
-             <div className="text-xs font-bold text-slate-700">AI Adaptive Hardening</div>
-             <p className="text-[11px] text-slate-500 leading-relaxed mt-1 hidden md:block">Automatically adjust complexity based on your speed and accuracy metrics during the session.</p>
+         {/* Adaptive Difficulty option */}
+         <label className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200 hover:border-slate-300 cursor-pointer transition-all">
+           <div className="pr-4">
+             <div className="text-xs sm:text-sm font-bold text-slate-700">Adaptive Difficulty</div>
+             <p className="text-[11px] text-slate-500 leading-normal mt-0.5 max-w-xs">Adjusts challenge based on your speed and accuracy during the session.</p>
            </div>
-           <input 
-             type="checkbox" 
-             className="mt-1 w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 accent-emerald-500" 
-             checked={settings.aiProgressiveHardening}
-             onChange={(e) => onSettingsChange({ ...settings, aiProgressiveHardening: e.target.checked })}
-           />
+           <div className="relative flex items-center">
+             <input 
+               type="checkbox" 
+               className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600 cursor-pointer" 
+               checked={settings.adaptiveDifficulty}
+               onChange={(e) => onSettingsChange({ ...settings, adaptiveDifficulty: e.target.checked })}
+             />
+           </div>
          </label>
 
          {/* Duration */}
          {settings.gameMode === GameMode.TIMED && (
            <div>
-             <h3 className="text-[10px] font-bold text-slate-800 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2">
+             <h3 className="text-[11px] font-bold text-indigo-900/80 uppercase tracking-widest mb-3 border-b border-indigo-50/80 pb-1.5 font-mono">
                Game Duration
              </h3>
              <div className="grid grid-cols-4 gap-2">
@@ -121,7 +126,7 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
                   <button
                    key={time}
                    onClick={() => onSettingsChange({ ...settings, gameDurationSeconds: time })}
-                   className={`py-2 px-3 rounded-lg font-bold text-sm border transition-colors ${settings.gameDurationSeconds === time ? 'bg-indigo-600 border-indigo-700 text-white' : 'bg-slate-100 border-slate-200 text-slate-400 hover:border-slate-300'}`}
+                   className={`py-2 px-2.5 rounded-lg font-bold text-xs border transition-colors cursor-pointer ${settings.gameDurationSeconds === time ? 'bg-indigo-600 border-indigo-700 text-white shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'}`}
                  >
                    {time < 60 ? `${time}s` : `${time / 60}m`}
                  </button>
@@ -132,9 +137,10 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
 
          <button 
            onClick={onStartGame}
-           className="w-full py-4 bg-indigo-900 border border-indigo-900 hover:bg-indigo-800 text-white rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg"
+           id="btn-start"
+           className="w-full py-4 bg-indigo-900 hover:bg-slate-800 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-md hover:shadow-lg cursor-pointer"
          >
-           <Play className="w-5 h-5 fill-current" /> Start Performance Session
+           <Play className="w-5 h-5 fill-current" /> Start Practice Session
          </button>
        </div>
     </div>

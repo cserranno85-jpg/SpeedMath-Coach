@@ -24,7 +24,7 @@ export interface Settings {
   difficulty: Difficulty;
   gameMode: GameMode;
   operations: Record<Operation, boolean>;
-  aiProgressiveHardening: boolean;
+  adaptiveDifficulty: boolean;
   gameDurationSeconds: number;
 }
 
