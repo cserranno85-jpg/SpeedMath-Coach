@@ -1,4 +1,4 @@
-package com.speedmath.app;
+package com.caivratech.arithsprint;
 
 import com.getcapacitor.BridgeActivity;
 
