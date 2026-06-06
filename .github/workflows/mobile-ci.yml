@@ -7,15 +7,14 @@ on:
       - master
   push:
     branches:
-      - speedmath-coach-release-blockers-v1
-      - speedmath-coach-final-fix-v1
-      - speedmath-coach-android-build-v1
+      - speedmath-coach-external-gradle-build-v1
 
 permissions:
   contents: read
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  GRADLE_VERSION: 8.14.3
 
 jobs:
   validate-mobile-project:
@@ -53,70 +52,18 @@ jobs:
       - name: Sync Android Capacitor project
         run: npx cap sync android
 
+      - name: Build Android debug APK with external Gradle
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -L -o gradle.zip "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
+          unzip -q gradle.zip
+          "./gradle-${GRADLE_VERSION}/bin/gradle" -p android :app:assembleDebug --stacktrace
+
       - name: Verify PNG signatures after asset generation
         shell: bash
         run: |
-          node - <<'NODE'
-          const fs = require('fs');
-          const path = require('path');
-
-          const root = process.cwd();
-          const skipParts = [
-            `${path.sep}node_modules${path.sep}`,
-            `${path.sep}.git${path.sep}`,
-            `${path.sep}dist${path.sep}`,
-            `${path.sep}build${path.sep}`,
-          ];
-
-          const bad = [];
-          const pngs = [];
-
-          function walk(dir) {
-            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-              const full = path.join(dir, entry.name);
-
-              if (skipParts.some(part => full.includes(part))) {
-                continue;
-              }
-
-              if (entry.isDirectory()) {
-                walk(full);
-              } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.png')) {
-                pngs.push(full);
-                const buf = fs.readFileSync(full);
-
-                const valid =
-                  buf.length >= 8 &&
-                  buf[0] === 0x89 &&
-                  buf[1] === 0x50 &&
-                  buf[2] === 0x4E &&
-                  buf[3] === 0x47 &&
-                  buf[4] === 0x0D &&
-                  buf[5] === 0x0A &&
-                  buf[6] === 0x1A &&
-                  buf[7] === 0x0A;
-
-                if (!valid) {
-                  bad.push(full);
-                }
-              }
-            }
-          }
-
-          walk(root);
-
-          console.log(`PNG files checked: ${pngs.length}`);
-
-          if (bad.length) {
-            console.error('Invalid PNG files found:');
-            for (const file of bad) {
-              console.error(`- ${path.relative(root, file)}`);
-            }
-            process.exit(1);
-          }
-
-          console.log('All PNG files have valid PNG signatures.');
-          NODE
+          node -e "const fs=require('fs');const path=require('path');const root=process.cwd();const bad=[];let count=0;function walk(dir){for(const e of fs.readdirSync(dir,{withFileTypes:true})){const f=path.join(dir,e.name);if(f.includes(`${path.sep}node_modules${path.sep}`)||f.includes(`${path.sep}.git${path.sep}`)||f.includes(`${path.sep}dist${path.sep}`)||f.includes(`${path.sep}build${path.sep}`))continue;if(e.isDirectory())walk(f);else if(e.isFile()&&e.name.toLowerCase().endsWith('.png')){count++;const b=fs.readFileSync(f);const ok=b.length>=8&&b[0]===0x89&&b[1]===0x50&&b[2]===0x4e&&b[3]===0x47&&b[4]===0x0d&&b[5]===0x0a&&b[6]===0x1a&&b[7]===0x0a;if(!ok)bad.push(f)}}}walk(root);console.log('PNG files checked: '+count);if(bad.length){console.error('Invalid PNG files found:');bad.forEach(f=>console.error('- '+path.relative(root,f)));process.exit(1)}console.log('All PNG files have valid PNG signatures.');"
 
       - name: Run mobile readiness verifier
         run: npm run verify:mobile
@@ -128,3 +75,9 @@ jobs:
           path: dist
           if-no-files-found: error
 
+      - name: Upload Android debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: speedmath-coach-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
