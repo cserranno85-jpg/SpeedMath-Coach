@@ -7,15 +7,14 @@ on:
       - master
   push:
     branches:
-      - speedmath-coach-release-blockers-v1
-      - speedmath-coach-final-fix-v1
-      - speedmath-coach-android-build-v1
+      - speedmath-coach-external-gradle-build-v1
 
 permissions:
   contents: read
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  GRADLE_VERSION: 8.14.3
 
 jobs:
   validate-mobile-project:
@@ -32,11 +31,11 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Set up Java for Android tooling
+      - name: Set up Java 21 for Android tooling
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
 
       - name: Install dependencies
         run: npm ci
@@ -53,69 +52,87 @@ jobs:
       - name: Sync Android Capacitor project
         run: npx cap sync android
 
+      - name: Build Android debug APK with external Gradle
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -L -o gradle.zip "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
+          unzip -q gradle.zip
+          "./gradle-${GRADLE_VERSION}/bin/gradle" -p android :app:assembleDebug --stacktrace
+
       - name: Verify PNG signatures after asset generation
         shell: bash
         run: |
-          node - <<'NODE'
+          node <<'NODE'
           const fs = require('fs');
           const path = require('path');
 
           const root = process.cwd();
-          const skipParts = [
-            `${path.sep}node_modules${path.sep}`,
-            `${path.sep}.git${path.sep}`,
-            `${path.sep}dist${path.sep}`,
-            `${path.sep}build${path.sep}`,
-          ];
+          const skipDirNames = new Set([
+            'node_modules',
+            '.git',
+            'dist',
+            'build',
+            '.gradle',
+          ]);
 
           const bad = [];
-          const pngs = [];
+          let count = 0;
 
           function walk(dir) {
             for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
               const full = path.join(dir, entry.name);
 
-              if (skipParts.some(part => full.includes(part))) {
+              if (entry.isDirectory()) {
+                if (skipDirNames.has(entry.name)) {
+                  continue;
+                }
+
+                walk(full);
                 continue;
               }
 
-              if (entry.isDirectory()) {
-                walk(full);
-              } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.png')) {
-                pngs.push(full);
-                const buf = fs.readFileSync(full);
+              if (!entry.isFile()) {
+                continue;
+              }
 
-                const valid =
-                  buf.length >= 8 &&
-                  buf[0] === 0x89 &&
-                  buf[1] === 0x50 &&
-                  buf[2] === 0x4E &&
-                  buf[3] === 0x47 &&
-                  buf[4] === 0x0D &&
-                  buf[5] === 0x0A &&
-                  buf[6] === 0x1A &&
-                  buf[7] === 0x0A;
+              if (!entry.name.toLowerCase().endsWith('.png')) {
+                continue;
+              }
 
-                if (!valid) {
-                  bad.push(full);
-                }
+              count += 1;
+
+              const buf = fs.readFileSync(full);
+              const valid =
+                buf.length >= 8 &&
+                buf[0] === 0x89 &&
+                buf[1] === 0x50 &&
+                buf[2] === 0x4e &&
+                buf[3] === 0x47 &&
+                buf[4] === 0x0d &&
+                buf[5] === 0x0a &&
+                buf[6] === 0x1a &&
+                buf[7] === 0x0a;
+
+              if (!valid) {
+                bad.push(path.relative(root, full));
               }
             }
           }
 
           walk(root);
 
-          console.log(`PNG files checked: ${pngs.length}`);
+          console.log(`PNG files checked: ${count}`);
 
           if (bad.length) {
             console.error('Invalid PNG files found:');
             for (const file of bad) {
-              console.error(`- ${path.relative(root, file)}`);
+              console.error(`- ${file}`);
             }
             process.exit(1);
           }
 
-          console.log('All PNG files have valid PNG signatures.');
+          console.log('All checked PNG files have valid PNG signatures.');
           NODE
 
       - name: Run mobile readiness verifier
@@ -128,3 +145,9 @@ jobs:
           path: dist
           if-no-files-found: error
 
+      - name: Upload Android debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: speedmath-coach-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
