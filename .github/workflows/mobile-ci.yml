@@ -1,0 +1,130 @@
+﻿name: SpeedMath Coach Mobile CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+  push:
+    branches:
+      - speedmath-coach-release-blockers-v1
+      - speedmath-coach-final-fix-v1
+      - speedmath-coach-android-build-v1
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  validate-mobile-project:
+    name: Validate mobile project
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Set up Java for Android tooling
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate SpeedMath Coach brand assets
+        run: npm run generate:brand-assets
+
+      - name: Build Vite app
+        run: npm run build
+
+      - name: Generate Capacitor native assets
+        run: npx @capacitor/assets generate
+
+      - name: Sync Android Capacitor project
+        run: npx cap sync android
+
+      - name: Verify PNG signatures after asset generation
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const root = process.cwd();
+          const skipParts = [
+            `${path.sep}node_modules${path.sep}`,
+            `${path.sep}.git${path.sep}`,
+            `${path.sep}dist${path.sep}`,
+            `${path.sep}build${path.sep}`,
+          ];
+
+          const bad = [];
+          const pngs = [];
+
+          function walk(dir) {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              const full = path.join(dir, entry.name);
+
+              if (skipParts.some(part => full.includes(part))) {
+                continue;
+              }
+
+              if (entry.isDirectory()) {
+                walk(full);
+              } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.png')) {
+                pngs.push(full);
+                const buf = fs.readFileSync(full);
+
+                const valid =
+                  buf.length >= 8 &&
+                  buf[0] === 0x89 &&
+                  buf[1] === 0x50 &&
+                  buf[2] === 0x4E &&
+                  buf[3] === 0x47 &&
+                  buf[4] === 0x0D &&
+                  buf[5] === 0x0A &&
+                  buf[6] === 0x1A &&
+                  buf[7] === 0x0A;
+
+                if (!valid) {
+                  bad.push(full);
+                }
+              }
+            }
+          }
+
+          walk(root);
+
+          console.log(`PNG files checked: ${pngs.length}`);
+
+          if (bad.length) {
+            console.error('Invalid PNG files found:');
+            for (const file of bad) {
+              console.error(`- ${path.relative(root, file)}`);
+            }
+            process.exit(1);
+          }
+
+          console.log('All PNG files have valid PNG signatures.');
+          NODE
+
+      - name: Run mobile readiness verifier
+        run: npm run verify:mobile
+
+      - name: Upload web build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: speedmath-coach-dist
+          path: dist
+          if-no-files-found: error
+

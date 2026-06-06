@@ -15,7 +15,8 @@
     "doctor": "npx cap doctor",
     "verify:mobile": "node scripts/verify-mobile-readiness.mjs",
     "generate:icons": "npx @capacitor/assets generate",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "generate:brand-assets": "node scripts/generate-speedmath-assets.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^8.4.0",
