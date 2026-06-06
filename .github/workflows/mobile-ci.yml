@@ -31,11 +31,11 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Set up Java for Android tooling
+      - name: Set up Java 21 for Android tooling
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
 
       - name: Install dependencies
         run: npm ci
@@ -81,3 +81,4 @@ jobs:
           name: speedmath-coach-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
