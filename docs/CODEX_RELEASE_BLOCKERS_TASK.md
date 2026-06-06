@@ -1,4 +1,4 @@
-﻿# Codex Task: Fix SpeedMath Coach Release Blockers
+﻿# Codex Task: Finish SpeedMath Coach Release Blockers
 
 Work only on this branch:
 
@@ -25,7 +25,7 @@ Do not:
 - add auth/login
 - add backend services
 - add payments
-- add Gemini/API calls
+- add AI/API calls
 - add camera
 - add microphone
 - add contacts
@@ -33,104 +33,43 @@ Do not:
 - add push notifications
 - add unnecessary native plugins
 
-## Current known blockers
+## Current status
 
-1. PNG assets may still be corrupted.
-2. src/manifest.webmanifest may reference missing .webp files.
-3. package.json may be missing generate:brand-assets.
-4. src/index.css may import Google Fonts.
-5. AndroidManifest.xml may still request INTERNET permission.
-6. npm run verify:mobile must pass.
-7. GitHub Actions Mobile CI must pass.
+The app identity, source brand asset generation, native asset generation, Android sync, and PNG signature verification have been improved.
 
-## Required fixes
+The remaining goal is to make this branch pass:
 
-### 1. Fix binary PNG assets safely
+npm run verify:mobile
 
-Use binary-safe asset generation only.
+and the GitHub Actions workflow:
 
-Do not edit image files as text.
-Do not paste binary image data into patches.
-Do not save JPEG data with a .png extension.
+SpeedMath Coach Mobile CI
 
-Generate valid PNGs:
+## Required checks
 
-- assets/icon.png
-- assets/splash.png
-- src/assets/icons/icon-48.png
-- src/assets/icons/icon-72.png
-- src/assets/icons/icon-96.png
-- src/assets/icons/icon-128.png
-- src/assets/icons/icon-192.png
-- src/assets/icons/icon-256.png
-- src/assets/icons/icon-512.png
+1. Confirm all PNG assets are valid binary PNG files.
 
-Every PNG must start with:
+2. Confirm manifest icons use real PNG files.
 
-89 50 4E 47 0D 0A 1A 0A
+3. Confirm package scripts include:
+   - generate:brand-assets
+   - build
+   - verify:mobile
 
-### 2. Fix package scripts
+4. Confirm the app remains offline/local-only.
 
-Ensure package.json includes:
+5. Confirm no legacy app names, legacy package IDs, old prototype labels, or API-key references remain in app source, native output, docs, metadata, or copied web assets.
 
-"generate:brand-assets": "node scripts/generate-speedmath-assets.mjs"
+6. Confirm Android package and namespace are:
+   - com.caivratech.speedmathcoach
 
-Keep:
+7. Confirm iOS bundle ID is:
+   - com.caivratech.speedmathcoach
 
-"build": "vite build"
-"verify:mobile": "node scripts/verify-mobile-readiness.mjs"
+8. Confirm app display name is:
+   - SpeedMath Coach
 
-### 3. Fix manifest icons
-
-Update src/manifest.webmanifest so icon paths use real .png files:
-
-- assets/icons/icon-48.png
-- assets/icons/icon-72.png
-- assets/icons/icon-96.png
-- assets/icons/icon-128.png
-- assets/icons/icon-192.png
-- assets/icons/icon-256.png
-- assets/icons/icon-512.png
-
-Each icon must use:
-
-"type": "image/png"
-
-### 4. Remove external font network request
-
-Remove Google Fonts import from src/index.css.
-
-Use system font stacks only:
-
-system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
-
-For monospace:
-
-ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace
-
-### 5. Android INTERNET permission review
-
-Inspect:
-
-android/app/src/main/AndroidManifest.xml
-
-If no app code requires network access, remove:
-
-<uses-permission android:name="android.permission.INTERNET" />
-
-Keep v1 offline/local-only.
-
-### 6. Clean generated output
-
-Delete:
-
-- dist
-- android/app/src/main/assets/public
-- ios/App/App/public
-
-### 7. Run verification commands
-
-Run:
+## Run
 
 npm install
 npm run generate:brand-assets
@@ -139,28 +78,28 @@ npx @capacitor/assets generate
 npx cap sync android
 npm run verify:mobile
 
-If possible, also run:
+If available:
 
 npx cap sync ios
 npx cap doctor
 
-## Do not claim completion unless
+## Completion criteria
+
+Do not claim completion unless:
 
 - npm run verify:mobile passes
+- GitHub Actions Mobile CI passes
 - all PNGs have valid headers
 - app identity remains SpeedMath Coach / com.caivratech.speedmathcoach
-- no stale ArithSprint references remain outside verifier blacklist
-- no stale MathFlow references remain outside verifier blacklist
-- no stale com.speedmath.app references remain
-- no GEMINI_API_KEY references remain
-- no Google AI Studio API claims remain
-- GitHub Actions Mobile CI passes
+- no legacy identifiers remain in searchable project files
+- Android is ready for Android Studio release signing
+- iOS is ready for Xcode signing/archive on macOS or a macOS cloud runner
 
 ## Commit
 
-Commit message:
+Use commit message:
 
-Fix SpeedMath Coach release blockers
+Fix SpeedMath Coach verifier false positive
 
 ## Pull request
 
@@ -174,6 +113,6 @@ Return:
 - commands run
 - verifier result
 - GitHub Actions result
-- whether Android is ready for Android Studio release signing
-- whether iOS is ready for Xcode signing/archive
+- Android readiness
+- iOS readiness
 - remaining manual steps
