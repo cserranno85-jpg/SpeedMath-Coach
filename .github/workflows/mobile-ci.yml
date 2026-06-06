@@ -63,7 +63,77 @@ jobs:
       - name: Verify PNG signatures after asset generation
         shell: bash
         run: |
-          node -e "const fs=require('fs');const path=require('path');const root=process.cwd();const bad=[];let count=0;function walk(dir){for(const e of fs.readdirSync(dir,{withFileTypes:true})){const f=path.join(dir,e.name);if(f.includes(`${path.sep}node_modules${path.sep}`)||f.includes(`${path.sep}.git${path.sep}`)||f.includes(`${path.sep}dist${path.sep}`)||f.includes(`${path.sep}build${path.sep}`))continue;if(e.isDirectory())walk(f);else if(e.isFile()&&e.name.toLowerCase().endsWith('.png')){count++;const b=fs.readFileSync(f);const ok=b.length>=8&&b[0]===0x89&&b[1]===0x50&&b[2]===0x4e&&b[3]===0x47&&b[4]===0x0d&&b[5]===0x0a&&b[6]===0x1a&&b[7]===0x0a;if(!ok)bad.push(f)}}}walk(root);console.log('PNG files checked: '+count);if(bad.length){console.error('Invalid PNG files found:');bad.forEach(f=>console.error('- '+path.relative(root,f)));process.exit(1)}console.log('All PNG files have valid PNG signatures.');"
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const root = process.cwd();
+          const skipDirNames = new Set([
+            'node_modules',
+            '.git',
+            'dist',
+            'build',
+            '.gradle',
+          ]);
+
+          const bad = [];
+          let count = 0;
+
+          function walk(dir) {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              const full = path.join(dir, entry.name);
+
+              if (entry.isDirectory()) {
+                if (skipDirNames.has(entry.name)) {
+                  continue;
+                }
+
+                walk(full);
+                continue;
+              }
+
+              if (!entry.isFile()) {
+                continue;
+              }
+
+              if (!entry.name.toLowerCase().endsWith('.png')) {
+                continue;
+              }
+
+              count += 1;
+
+              const buf = fs.readFileSync(full);
+              const valid =
+                buf.length >= 8 &&
+                buf[0] === 0x89 &&
+                buf[1] === 0x50 &&
+                buf[2] === 0x4e &&
+                buf[3] === 0x47 &&
+                buf[4] === 0x0d &&
+                buf[5] === 0x0a &&
+                buf[6] === 0x1a &&
+                buf[7] === 0x0a;
+
+              if (!valid) {
+                bad.push(path.relative(root, full));
+              }
+            }
+          }
+
+          walk(root);
+
+          console.log(`PNG files checked: ${count}`);
+
+          if (bad.length) {
+            console.error('Invalid PNG files found:');
+            for (const file of bad) {
+              console.error(`- ${file}`);
+            }
+            process.exit(1);
+          }
+
+          console.log('All checked PNG files have valid PNG signatures.');
+          NODE
 
       - name: Run mobile readiness verifier
         run: npm run verify:mobile
@@ -81,4 +151,3 @@ jobs:
           name: speedmath-coach-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-
