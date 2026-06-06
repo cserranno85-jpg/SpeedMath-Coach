@@ -53,6 +53,12 @@ jobs:
       - name: Sync Android Capacitor project
         run: npx cap sync android
 
+      - name: Build Android debug APK
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:assembleDebug
+
       - name: Verify PNG signatures after asset generation
         shell: bash
         run: |
@@ -127,4 +133,5 @@ jobs:
           name: speedmath-coach-dist
           path: dist
           if-no-files-found: error
+
 
