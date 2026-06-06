@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "com.caivratech.arithsprint"
+    namespace = "com.caivratech.speedmathcoach"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.caivratech.arithsprint"
+        applicationId "com.caivratech.speedmathcoach"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

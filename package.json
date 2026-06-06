@@ -6,9 +6,15 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 3000",
     "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 3000",
     "build:mobile": "npm run build && npx cap sync",
+    "sync:android": "npm run build && npx cap sync android",
+    "sync:ios": "npm run build && npx cap sync ios",
+    "open:android": "npx cap open android",
+    "open:ios": "npx cap open ios",
+    "doctor": "npx cap doctor",
+    "verify:mobile": "node scripts/verify-mobile-readiness.mjs",
     "generate:icons": "npx @capacitor/assets generate",
-    "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

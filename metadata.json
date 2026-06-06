@@ -1,8 +1,6 @@
 {
-  "name": "ArithSprint",
-  "description": "A high-speed mental math training companion with responsive touch layout, adaptive progressive difficulty, and locally tracked performance analytics.",
+  "name": "SpeedMath Coach",
+  "description": "An offline/local-only mental math practice app that helps users build faster arithmetic habits through quick timed drills, clean feedback, and local progress tracking.",
   "requestFramePermissions": [],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
+  "majorCapabilities": []
 }

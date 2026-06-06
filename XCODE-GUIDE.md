@@ -1,6 +1,6 @@
-# Mobile Build Guide for ArithSprint (iOS & Android)
+# Mobile Build Guide for SpeedMath Coach (iOS & Android)
 
-This guide documents how to build **ArithSprint** for **iOS (Xcode)** and **Android (.aab)** using Capacitor. Since this sandbox environment runs on Linux, **native compilation (Xcode/iOS builds) must be performed on a macOS machine**, or through cloud build services like EAS/Appflow. All native shell project structures have been correctly initialized and synced in this project (`/ios` and `/android`).
+This guide documents how to build **SpeedMath Coach** for **iOS (Xcode)** and **Android (.aab)** using Capacitor. Since this sandbox environment runs on Linux, **native compilation (Xcode/iOS builds) must be performed on a macOS machine**, or through cloud build services like EAS/Appflow. All native shell project structures have been correctly initialized and synced in this project (`/ios` and `/android`).
 
 ---
 
@@ -68,7 +68,7 @@ For Xcode to archive and bundle your iOS app, you must configure signing:
 3. Open the **Signing & Capabilities** tab.
 4. Check **"Automatically manage signing"**.
 5. Select your **Team** (Apple Developer Account). If you don't have a paid account, you can select your Personal Team for free testing on custom devices.
-6. Under **Bundle Identifier**, ensure it's set to `com.caivratech.arithsprint` (or change to a domain you own).
+6. Under **Bundle Identifier**, ensure it's set to `com.caivratech.speedmathcoach` (or change to a domain you own).
 
 ### Step 4: Archive and Export (.ipa file)
 To prepare your app for TestFlight or App Store:
@@ -107,7 +107,7 @@ Your signed `.aab` will be generated in `android/app/release/app-release.aab` an
 
 To replace the default Capacitor placeholder assets with your custom game branding:
 
-1. Place your native high-resolution logo or icon file at `/assets/logo.png`.
+1. Place your native high-resolution logo or icon file at `/assets/icon.png` and splash at `/assets/splash.png`.
 2. Run the generator script configured in your `package.json`:
    ```bash
    npm run generate:icons

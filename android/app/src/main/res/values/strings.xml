@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">ArithSprint</string>
-    <string name="title_activity_main">ArithSprint</string>
-    <string name="package_name">com.caivratech.arithsprint</string>
-    <string name="custom_url_scheme">com.caivratech.arithsprint</string>
+    <string name="app_name">SpeedMath Coach</string>
+    <string name="title_activity_main">SpeedMath Coach</string>
+    <string name="package_name">com.caivratech.speedmathcoach</string>
+    <string name="custom_url_scheme">com.caivratech.speedmathcoach</string>
 </resources>

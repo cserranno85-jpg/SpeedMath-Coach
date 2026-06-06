@@ -24,8 +24,8 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
     <div className="w-full max-w-xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
        <div className="flex justify-between items-start mb-8">
          <div>
-           <h1 className="text-3xl font-bold leading-none text-slate-800 mb-2">ArithSprint</h1>
-           <p className="text-xs text-slate-500 font-medium tracking-tight">Precision Speed Drill</p>
+           <h1 className="text-3xl font-bold leading-none text-slate-800 mb-2">SpeedMath Coach</h1>
+           <p className="text-xs text-slate-500 font-medium tracking-tight">Fast Math, Sharper Mind.</p>
          </div>
          <button 
            onClick={onViewStats}
