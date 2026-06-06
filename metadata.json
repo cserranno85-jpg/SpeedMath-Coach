@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Speed Math Exercise",
+  "description": "A speed math exercise app with real-time handwriting recognition for answers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
