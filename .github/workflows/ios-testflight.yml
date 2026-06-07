@@ -49,16 +49,38 @@ jobs:
 
       - name: Prepare signing files
         shell: bash
+        env:
+          IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
+          IOS_PROVISION_PROFILE_BASE64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
         run: |
           set -euo pipefail
 
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
           mkdir -p build
 
-          echo "${{ secrets.IOS_DIST_CERT_P12_BASE64 }}" | base64 --decode > build/ios_distribution.p12
-          echo "${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}" | base64 --decode > build/profile.mobileprovision
+          python3 - <<'PY'
+          import base64
+          import os
+          from pathlib import Path
 
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< "$(security cms -D -i build/profile.mobileprovision)")
+          def decode_secret(name, output_path):
+              raw = os.environ.get(name, "")
+              cleaned = "".join(raw.split())
+              if not cleaned:
+                  raise SystemExit(f"{name} is empty or missing")
+              try:
+                  data = base64.b64decode(cleaned, validate=True)
+              except Exception as exc:
+                  raise SystemExit(f"Failed to decode {name}: {exc}")
+              Path(output_path).write_bytes(data)
+              print(f"Wrote {output_path}: {len(data)} bytes")
+
+          decode_secret("IOS_DIST_CERT_P12_BASE64", "build/ios_distribution.p12")
+          decode_secret("IOS_PROVISION_PROFILE_BASE64", "build/profile.mobileprovision")
+          PY
+
+          security cms -D -i build/profile.mobileprovision > build/profile.plist
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" build/profile.plist)
           echo "PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
 
           cp build/profile.mobileprovision "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
@@ -147,4 +169,5 @@ jobs:
           name: SpeedMathCoach-iOS-v1.0-build1
           path: build/export/*.ipa
           if-no-files-found: error
+
 
