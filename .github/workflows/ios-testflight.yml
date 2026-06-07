@@ -184,11 +184,29 @@ jobs:
             exit 1
           fi
 
-          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          KEY_FILE="AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8"
 
-          KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8"
-          printf "%s" "$APP_STORE_CONNECT_API_KEY_P8" > "$KEY_PATH"
-          chmod 600 "$KEY_PATH"
+          mkdir -p \
+            "$PWD/private_keys" \
+            "$HOME/private_keys" \
+            "$HOME/.private_keys" \
+            "$HOME/.appstoreconnect/private_keys"
+
+          printf "%s" "$APP_STORE_CONNECT_API_KEY_P8" > "$PWD/private_keys/$KEY_FILE"
+          cp "$PWD/private_keys/$KEY_FILE" "$HOME/private_keys/$KEY_FILE"
+          cp "$PWD/private_keys/$KEY_FILE" "$HOME/.private_keys/$KEY_FILE"
+          cp "$PWD/private_keys/$KEY_FILE" "$HOME/.appstoreconnect/private_keys/$KEY_FILE"
+
+          chmod 600 "$PWD/private_keys/$KEY_FILE"
+          chmod 600 "$HOME/private_keys/$KEY_FILE"
+          chmod 600 "$HOME/.private_keys/$KEY_FILE"
+          chmod 600 "$HOME/.appstoreconnect/private_keys/$KEY_FILE"
+
+          echo "AuthKey file locations:"
+          ls -la "$PWD/private_keys/$KEY_FILE"
+          ls -la "$HOME/private_keys/$KEY_FILE"
+          ls -la "$HOME/.private_keys/$KEY_FILE"
+          ls -la "$HOME/.appstoreconnect/private_keys/$KEY_FILE"
 
           echo "Uploading IPA to TestFlight: $IPA_PATH"
 
@@ -197,3 +215,4 @@ jobs:
             --file "$IPA_PATH" \
             --apiKey "$APP_STORE_CONNECT_KEY_ID" \
             --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
+
