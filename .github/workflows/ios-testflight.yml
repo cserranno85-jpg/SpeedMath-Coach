@@ -52,6 +52,8 @@ jobs:
         env:
           IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
           IOS_PROVISION_PROFILE_BASE64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
+          IOS_DIST_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
           set -euo pipefail
 
@@ -68,10 +70,7 @@ jobs:
               cleaned = "".join(raw.split())
               if not cleaned:
                   raise SystemExit(f"{name} is empty or missing")
-              try:
-                  data = base64.b64decode(cleaned, validate=True)
-              except Exception as exc:
-                  raise SystemExit(f"Failed to decode {name}: {exc}")
+              data = base64.b64decode(cleaned, validate=True)
               Path(output_path).write_bytes(data)
               print(f"Wrote {output_path}: {len(data)} bytes")
 
@@ -88,6 +87,9 @@ jobs:
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          echo "Verifying P12 password before keychain import..."
+          openssl pkcs12 -in build/ios_distribution.p12 -noout -info -passin env:IOS_DIST_CERT_PASSWORD
 
           security import build/ios_distribution.p12 \
             -k "$KEYCHAIN_PATH" \
@@ -124,8 +126,6 @@ jobs:
             </dict>
             <key>stripSwiftSymbols</key>
             <true/>
-            <key>uploadBitcode</key>
-            <false/>
             <key>uploadSymbols</key>
             <true/>
           </dict>
@@ -161,7 +161,7 @@ jobs:
             -exportPath "$EXPORT_PATH" \
             -exportOptionsPlist ExportOptions.plist
 
-          find "$EXPORT_PATH" -type f -maxdepth 2 -print
+          find "$EXPORT_PATH" -maxdepth 2 -type f -print
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
@@ -169,7 +169,3 @@ jobs:
           name: SpeedMathCoach-iOS-v1.0-build1
           path: build/export/*.ipa
           if-no-files-found: error
-
-
-
-
