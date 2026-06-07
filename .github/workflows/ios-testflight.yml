@@ -88,7 +88,6 @@ jobs:
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
-          echo "Verifying P12 password before keychain import..."
           openssl pkcs12 -in build/ios_distribution.p12 -noout -info -passin env:IOS_DIST_CERT_PASSWORD
 
           security import build/ios_distribution.p12 \
@@ -132,8 +131,6 @@ jobs:
           </plist>
           EOF
 
-          cat ExportOptions.plist
-
       - name: Archive iOS app
         run: |
           set -euo pipefail
@@ -171,4 +168,32 @@ jobs:
           path: build/export/*.ipa
           if-no-files-found: error
 
+      - name: Upload IPA to TestFlight
+        shell: bash
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_P8: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
+        run: |
+          set -euo pipefail
 
+          IPA_PATH=$(find build/export -name "*.ipa" -type f | head -n 1)
+
+          if [ -z "$IPA_PATH" ]; then
+            echo "No IPA found in build/export"
+            exit 1
+          fi
+
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+
+          KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8"
+          printf "%s" "$APP_STORE_CONNECT_API_KEY_P8" > "$KEY_PATH"
+          chmod 600 "$KEY_PATH"
+
+          echo "Uploading IPA to TestFlight: $IPA_PATH"
+
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA_PATH" \
+            --apiKey "$APP_STORE_CONNECT_KEY_ID" \
+            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
