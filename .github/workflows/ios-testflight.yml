@@ -184,7 +184,12 @@ jobs:
             exit 1
           fi
 
-          KEY_FILE="AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8"
+          KEY_ID="$(printf "%s" "$APP_STORE_CONNECT_KEY_ID" | tr -d "[:space:]")"
+          ISSUER_ID="$(printf "%s" "$APP_STORE_CONNECT_ISSUER_ID" | tr -d "[:space:]")"
+          KEY_FILE="AuthKey_${KEY_ID}.p8"
+
+          echo "Key ID length: ${#KEY_ID}"
+          echo "Issuer ID length: ${#ISSUER_ID}"
 
           mkdir -p \
             "$PWD/private_keys" \
@@ -193,6 +198,7 @@ jobs:
             "$HOME/.appstoreconnect/private_keys"
 
           printf "%s" "$APP_STORE_CONNECT_API_KEY_P8" > "$PWD/private_keys/$KEY_FILE"
+
           cp "$PWD/private_keys/$KEY_FILE" "$HOME/private_keys/$KEY_FILE"
           cp "$PWD/private_keys/$KEY_FILE" "$HOME/.private_keys/$KEY_FILE"
           cp "$PWD/private_keys/$KEY_FILE" "$HOME/.appstoreconnect/private_keys/$KEY_FILE"
@@ -213,6 +219,5 @@ jobs:
           xcrun altool --upload-app \
             --type ios \
             --file "$IPA_PATH" \
-            --apiKey "$APP_STORE_CONNECT_KEY_ID" \
-            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
-
+            --apiKey "$KEY_ID" \
+            --apiIssuer "$ISSUER_ID"
