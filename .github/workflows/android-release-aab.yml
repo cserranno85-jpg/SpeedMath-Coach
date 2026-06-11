@@ -39,6 +39,27 @@ jobs:
       - name: Sync Capacitor Android project
         run: npx cap sync android
 
+      - name: Validate Android signing secrets
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for secret_name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [ -z "${!secret_name:-}" ]; then
+              echo "::error::Missing required secret: ${secret_name}"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "One or more required Android signing secrets are missing."
+            exit 1
+          fi
+
       - name: Decode Android release keystore
         shell: bash
         env:
@@ -48,6 +69,10 @@ jobs:
           mkdir -p android/app/keystore
           printf "%s" "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/keystore/release.jks
           chmod 600 android/app/keystore/release.jks
+
+      - name: Ensure Gradle wrapper is executable
+        working-directory: android
+        run: chmod +x ./gradlew
 
       - name: Build signed release AAB
         working-directory: android
