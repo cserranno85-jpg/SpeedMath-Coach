@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { GameSession, Difficulty } from '../types';
+import React, { useEffect } from 'react';
 import { RotateCw, Trophy, Clock, Award, Star } from 'lucide-react';
 import { motion } from 'motion/react';
-import { evaluateAchievements, Badge } from '../utils/streakAndAchievements';
+import { Badge } from '../utils/streakAndAchievements';
 import { sounds } from '../utils/soundEngine';
 import pibotMascot from '../assets/images/pibot-mascot.jpg';
 
@@ -10,13 +9,13 @@ interface GameOverProps {
   score: number;
   totalQuestions: number;
   history: any[];
+  unlockedBadges: Badge[];
   onPlayAgain: () => void;
   onMenu: () => void;
 }
 
-export const GameOver: React.FC<GameOverProps> = ({ score, totalQuestions, history, onPlayAgain, onMenu }) => {
+export const GameOver: React.FC<GameOverProps> = ({ score, totalQuestions, history, unlockedBadges, onPlayAgain, onMenu }) => {
   const accuracy = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
-  const [unlockedNow, setUnlockedNow] = useState<Badge[]>([]);
   
   // Group history by time interval
   const under3s = history.filter(h => h.timeSpent <= 3).length;
@@ -33,15 +32,6 @@ export const GameOver: React.FC<GameOverProps> = ({ score, totalQuestions, histo
       sounds.playIncorrect();
     }
 
-    const raw = localStorage.getItem('speedMathProgress');
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        const badgesList = evaluateAchievements(parsed);
-        // Filter badges that are actually unlocked
-        setUnlockedNow(badgesList.filter(b => b.unlocked));
-      } catch (e) {}
-    }
   }, []);
 
   const getReactiveMascotMessage = () => {
@@ -107,13 +97,13 @@ export const GameOver: React.FC<GameOverProps> = ({ score, totalQuestions, histo
        </div>
 
        {/* Unlocked Badges Tray on gameover */}
-       {unlockedNow.length > 0 && (
-         <div id="unlocked_badges_toast_tray" className="mb-6 bg-amber-50/50 p-4 rounded-xl border border-amber-200/60 shadow-sm shadow-amber-50 animate-pulse">
+       {unlockedBadges.length > 0 && (
+         <div id="unlocked_badges_toast_tray" className="mb-6 bg-amber-50/50 p-4 rounded-xl border border-amber-200/60 shadow-sm shadow-amber-50">
             <h4 className="text-[10px] font-bold text-amber-800 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-               <Star className="w-4 h-4 text-amber-500 fill-amber-500" /> Achievements Unlocked ({unlockedNow.length})
+               <Star className="w-4 h-4 text-amber-500 fill-amber-500" /> New Achievements ({unlockedBadges.length})
             </h4>
             <div className="flex flex-wrap gap-2">
-               {unlockedNow.map(badge => (
+               {unlockedBadges.map(badge => (
                   <span 
                     key={badge.id}
                     title={badge.description}

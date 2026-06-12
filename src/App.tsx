@@ -5,6 +5,7 @@ import { Game } from './components/Game';
 import { GameOver } from './components/GameOver';
 import { Stats } from './components/Stats';
 import { motion, AnimatePresence } from 'motion/react';
+import { Badge } from './utils/streakAndAchievements';
 
 type AppState = 'MENU' | 'PLAYING' | 'GAMEOVER' | 'STATS';
 
@@ -29,6 +30,7 @@ export default function App() {
   const [lastScore, setLastScore] = useState(0);
   const [lastTotal, setLastTotal] = useState(0);
   const [lastHistory, setLastHistory] = useState<any[]>([]);
+  const [lastUnlockedBadges, setLastUnlockedBadges] = useState<Badge[]>([]);
 
   // Load settings from local storage
   useEffect(() => {
@@ -53,10 +55,11 @@ export default function App() {
     setAppState('PLAYING');
   };
 
-  const handleEndGame = (score: number, totalSubmissions: number, history: any[]) => {
+  const handleEndGame = (score: number, totalSubmissions: number, history: any[], unlockedBadges: Badge[]) => {
     setLastScore(score);
     setLastTotal(totalSubmissions);
     setLastHistory(history);
+    setLastUnlockedBadges(unlockedBadges);
     setAppState('GAMEOVER');
 
     // Here you could also save history to localStorage for long-term progress tracking
@@ -129,6 +132,7 @@ export default function App() {
                       score={lastScore}
                       totalQuestions={lastTotal}
                       history={lastHistory}
+                      unlockedBadges={lastUnlockedBadges}
                       onPlayAgain={handleStartGame}
                       onMenu={() => setAppState('MENU')}
                     />

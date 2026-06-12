@@ -2,55 +2,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Settings, MathProblem, Difficulty, GameMode } from '../types';
 import { sounds } from '../utils/soundEngine';
 import { generateProblem, getOperationSymbol } from '../utils/mathGenerator';
-import { Timer, Trophy, CheckCircle, XCircle, Delete, Home, Award, Zap, Crown, Flame, Rocket, PlusCircle, ShieldAlert } from 'lucide-react';
+import { Timer, XCircle, Delete, Home } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { evaluateAchievements, Badge } from '../utils/streakAndAchievements';
 import pibotMascot from '../assets/images/pibot-mascot.jpg';
 
-interface ToastSlot {
-  id: string;
-  title: string;
-  description: string;
-  type: 'badge' | 'streak' | 'score' | 'speed';
-  iconName?: string;
-  colorGrade?: 'bronze' | 'silver' | 'gold' | 'cosmic' | 'normal';
-}
-
-const ToastIcon = ({ name, className }: { name?: string; className?: string }) => {
-  switch (name) {
-    case 'Award': return <Award className={className} />;
-    case 'Zap': return <Zap className={className} />;
-    case 'Crown': return <Crown className={className} />;
-    case 'Flame': return <Flame className={className} />;
-    case 'Rocket': return <Rocket className={className} />;
-    case 'PlusCircle': return <PlusCircle className={className} />;
-    case 'XCircle': return <XCircle className={className} />;
-    case 'ShieldAlert': return <ShieldAlert className={className} />;
-    default: return <Award className={className} />;
-  }
-};
-
-const getToastColorStyles = (type: string, colorGrade?: string) => {
-  if (type === 'badge') {
-    switch (colorGrade) {
-      case 'bronze': return { bg: 'bg-amber-100 text-amber-700 border-amber-400', label: '🥉 BRONZE BADGE' };
-      case 'silver': return { bg: 'bg-slate-100 text-slate-600 border-slate-400', label: '🥈 SILVER BADGE' };
-      case 'gold': return { bg: 'bg-yellow-50 text-yellow-600 border-yellow-400', label: '🥇 GOLD BADGE' };
-      case 'cosmic': return { bg: 'bg-indigo-950 text-purple-400 border-purple-500', label: '✨ COSMIC BADGE' };
-      default: return { bg: 'bg-indigo-50 text-indigo-700 border-indigo-400', label: '🎖️ BADGE UNLOCKED' };
-    }
-  }
-  switch (type) {
-    case 'streak': return { bg: 'bg-orange-100 text-orange-600 border-orange-400', label: '🔥 STREAK MILESTONE' };
-    case 'score': return { bg: 'bg-emerald-100 text-emerald-600 border-emerald-400', label: '🏆 SCORE MILESTONE' };
-    case 'speed': return { bg: 'bg-cyan-100 text-cyan-600 border-cyan-400', label: '⚡ SPEED MILESTONE' };
-    default: return { bg: 'bg-indigo-50 text-indigo-700 border-indigo-400', label: '🎉 MILESTONE ACHIEVED' };
-  }
-};
-
 interface GameProps {
   settings: Settings;
-  onEndGame: (score: number, totalSubmissions: number, history: any[]) => void;
+  onEndGame: (score: number, totalSubmissions: number, history: any[], unlockedBadges: Badge[]) => void;
   onHome: () => void;
 }
 
@@ -72,16 +31,13 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
   const [freezesLeft, setFreezesLeft] = useState(1);
   const [hintsLeft, setHintsLeft] = useState(1);
   const [freezeTimeRemaining, setFreezeTimeRemaining] = useState(0);
-  const [powerupEarnedNotification, setPowerupEarnedNotification] = useState<string | null>(null);
   
   const questionStartTimeRef = useRef(Date.now());
 
-  // Toasts state and systems
-  const [toasts, setToasts] = useState<ToastSlot[]>([]);
+  // Achievement unlocks are tracked live but displayed only after active gameplay ends.
   const savedProgressRef = useRef<any[]>([]);
   const previouslyUnlockedBadgeIdsRef = useRef<Set<string>>(new Set());
-  const hasTriggeredSpeedSub1Ref = useRef(false);
-  const hasTriggeredSpeedSub2Ref = useRef(false);
+  const roundUnlockedBadgesRef = useRef<Badge[]>([]);
 
   // Sync state values to refs on change to prevent React dependency closing variables bugs
   const scoreRef = useRef(0);
@@ -119,32 +75,6 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
     }
   }, []);
 
-  const triggerToast = useCallback((
-    id: string,
-    title: string,
-    description: string,
-    type: 'badge' | 'streak' | 'score' | 'speed',
-    iconName?: string,
-    colorGrade?: 'bronze' | 'silver' | 'gold' | 'cosmic' | 'normal'
-  ) => {
-    // Play achievement chime
-    sounds.playAchievement();
-    
-    setToasts(prev => {
-      if (prev.some(t => t.id === id)) return prev;
-      return [...prev, { id, title, description, type, iconName, colorGrade }];
-    });
-
-    // Auto-dismiss in 4000ms
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, 4000);
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  }, []);
-
   // Initialize first problem
   useEffect(() => {
     setCurrentProblem(generateProblem(currentDifficulty, settings.operations));
@@ -155,7 +85,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
   useEffect(() => {
     if (settings.gameMode === GameMode.UNTIMED) return;
     if (timeLeft <= 0) {
-      onEndGame(score, totalSubmissions, history);
+      onEndGame(score, totalSubmissions, history, roundUnlockedBadgesRef.current);
       return;
     }
     const timer = setInterval(() => {
@@ -199,15 +129,9 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
       const isFreezeReward = Math.random() > 0.5;
       if (isFreezeReward) {
         setFreezesLeft(f => f + 1);
-        setPowerupEarnedNotification(`+1 Freeze (Streak ${nextStreak} Reward!)`);
       } else {
         setHintsLeft(h => h + 1);
-        setPowerupEarnedNotification(`+1 Hint (Streak ${nextStreak} Reward!)`);
       }
-      sounds.playAchievement();
-      setTimeout(() => {
-        setPowerupEarnedNotification(null);
-      }, 2200);
     }
 
     // Save to history (only correct answers are logged in history for time metrics)
@@ -239,15 +163,9 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
           currentBadges.forEach(badge => {
              if (badge.unlocked && !previouslyUnlockedBadgeIdsRef.current.has(badge.id)) {
                 previouslyUnlockedBadgeIdsRef.current.add(badge.id);
-                // Trigger beautiful badge toast on screen
-                triggerToast(
-                   `badge_${badge.id}`,
-                   `Badge Unlocked: ${badge.title}! 🎖️`,
-                   badge.description,
-                   'badge',
-                   badge.icon,
-                   badge.colorGrade
-                );
+                if (!roundUnlockedBadgesRef.current.some(queuedBadge => queuedBadge.id === badge.id)) {
+                   roundUnlockedBadgesRef.current = [...roundUnlockedBadgesRef.current, badge];
+                }
              }
           });
        } catch (err) {
@@ -256,40 +174,6 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
 
        return newHist;
     });
-
-    // Handle in-game milestones
-    // 1. Streak Milestones
-    if (nextStreak === 5) {
-      triggerToast('streak_5', 'Streak Spark! 🔥', 'Reached 5 consecutive correct answers.', 'streak');
-    } else if (nextStreak === 10) {
-      triggerToast('streak_10', 'On Fire! 🔥', 'Reached 10 consecutive correct answers!', 'streak');
-    } else if (nextStreak === 15) {
-      triggerToast('streak_15', 'Inferno! 💥', 'Reached 15 consecutive correct answers!', 'streak');
-    } else if (nextStreak === 20) {
-      triggerToast('streak_20', 'Math Legend! 🌟', 'Reached 20 consecutive correct answers!', 'streak');
-    } else if (nextStreak > 20 && nextStreak % 10 === 0) {
-      triggerToast(`streak_${nextStreak}`, `${nextStreak} Streak! 👑`, 'Unstoppable mathematical precision!', 'streak');
-    }
-
-    // 2. Score Milestones
-    if (nextScore === 10) {
-      triggerToast('score_10', 'Double Digits! 🏆', 'Scored 10 points in this session.', 'score');
-    } else if (nextScore === 20) {
-      triggerToast('score_20', 'Elite Solver! 💎', 'Scored 20 points in this session!', 'score');
-    } else if (nextScore === 30) {
-      triggerToast('score_30', 'Grandmaster Speed! 🚀', 'Scored 30 points in a single session!', 'score');
-    } else if (nextScore > 30 && nextScore % 10 === 0) {
-      triggerToast(`score_${nextScore}`, `${nextScore} Points! 👑`, 'Pristine speedmath drill performance!', 'score');
-    }
-
-    // 3. Speed Milestones (first sub-1.8s and first sub-1.0s)
-    if (timeSpent < 1.0 && !hasTriggeredSpeedSub1Ref.current) {
-      triggerToast('speed_sub_1', 'Sub-Second Answer! ⚡', `Solved a problem in just ${timeSpent.toFixed(2)}s!`, 'speed');
-      hasTriggeredSpeedSub1Ref.current = true;
-    } else if (timeSpent < 1.8 && !hasTriggeredSpeedSub2Ref.current) {
-      triggerToast('speed_sub_2', 'Instinctive Reflex! ⚡', `Solved a problem in ${timeSpent.toFixed(2)}s!`, 'speed');
-      hasTriggeredSpeedSub2Ref.current = true;
-    }
 
     // Progressive logic if enabled
     let nextDifficulty = currentDifficulty;
@@ -314,7 +198,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
        setFeedback(null);
        questionStartTimeRef.current = Date.now();
     }, 50); // extremely fast swipe delay
-  }, [currentDifficulty, currentProblem, settings, triggerToast]);
+  }, [currentDifficulty, currentProblem, settings]);
 
   const handleDigit = useCallback((digit: string) => {
      if (!currentProblem || feedback === 'correct') return; // ignore if transitioning
@@ -522,24 +406,8 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
              </motion.div>
            </AnimatePresence>
 
-           {/* Streak Reward & Power-up HUD */}
+           {/* Power-up HUD */}
            <div className="w-full max-w-sm flex flex-col items-center">
-              <AnimatePresence>
-                 {powerupEarnedNotification && (
-                    <motion.div 
-                       initial={{ opacity: 0, y: 12, scale: 0.9 }} 
-                       animate={{ opacity: 1, y: 0, scale: 1 }} 
-                       exit={{ opacity: 0, y: -12, scale: 0.9 }}
-                       className="w-full mb-3 flex justify-center"
-                    >
-                       <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-amber-50 text-[10px] font-black tracking-widest uppercase py-1.5 px-4 rounded-full shadow-lg flex items-center gap-1.5 border border-amber-400/30 animate-pulse">
-                          <span>✨</span>
-                          <span>{powerupEarnedNotification}</span>
-                       </div>
-                    </motion.div>
-                 )}
-              </AnimatePresence>
-
               {/* Power-up Actions Panel */}
               <div className="w-full bg-[#FAF7EC] border-4 border-slate-900 p-2.5 rounded-2xl flex gap-2.5 shadow-[3px_3px_0_0_#0f172a] mb-4">
                  <button
@@ -626,68 +494,6 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
                </p>
            </div>
        </div>
-
-        {/* Non-intrusive Toast Notifications Container */}
-        <div className="fixed top-24 right-4 md:right-8 z-50 pointer-events-none flex flex-col gap-3 max-w-sm w-[calc(100%-2rem)] items-end">
-           <AnimatePresence>
-              {toasts.map((toast) => {
-                 const colors = getToastColorStyles(toast.type, toast.colorGrade);
-                 return (
-                    <motion.div
-                       layout
-                       key={toast.id}
-                       initial={{ opacity: 0, x: 50, scale: 0.9 }}
-                       animate={{ opacity: 1, x: 0, scale: 1 }}
-                       exit={{ opacity: 0, x: 100, scale: 0.9, transition: { duration: 0.2 } }}
-                       className="w-full bg-[#FAF7EC] border-4 border-slate-900 rounded-[1.5rem] shadow-[4px_4px_0_0_#0f172a] p-4 flex items-start gap-3 pointer-events-auto select-none overflow-hidden relative"
-                    >
-                       {/* Animated Badge Icon Background */}
-                       <div className={`p-2 px-2.5 rounded-xl border-2 border-slate-900 ${colors.bg} flex-shrink-0 flex items-center justify-center`}>
-                          {toast.type === 'badge' ? (
-                             <ToastIcon name={toast.iconName} className="w-5 h-5 md:w-6 md:h-6 stroke-[2.5]" />
-                          ) : toast.type === 'streak' ? (
-                             <Flame className="w-5 h-5 md:w-6 md:h-6 stroke-[2.5]" />
-                          ) : toast.type === 'score' ? (
-                             <Trophy className="w-5 h-5 md:w-6 md:h-6 stroke-[2.5]" />
-                          ) : (
-                             <Zap className="w-5 h-5 md:w-6 md:h-6 stroke-[2.5]" />
-                          )}
-                       </div>
-                       
-                       {/* Notification text details */}
-                       <div className="flex-1 min-w-0 pr-2">
-                          <div className="text-[9px] font-black tracking-widest text-indigo-700 uppercase mb-1">
-                             {colors.label}
-                          </div>
-                          <h4 className="text-xs md:text-sm font-black text-slate-800 leading-tight">
-                             {toast.title}
-                          </h4>
-                          <p className="text-[10px] md:text-[11px] text-slate-500 font-bold leading-snug mt-0.5">
-                             {toast.description}
-                          </p>
-                       </div>
-                       
-                       {/* Manual Dismiss Button */}
-                       <button 
-                          onClick={() => removeToast(toast.id)}
-                          className="text-slate-400 hover:text-slate-900 p-0.5 -mt-1 -mr-1 transition-colors cursor-pointer shrink-0"
-                          title="Dismiss"
-                       >
-                          <XCircle className="w-4 h-4 shrink-0" />
-                       </button>
-                       
-                       {/* Sliding Auto-Dismiss Progress Indicator bar */}
-                       <motion.div 
-                          initial={{ width: '100%' }}
-                          animate={{ width: 0 }}
-                          transition={{ duration: 4.0, ease: 'linear' }}
-                          className="absolute bottom-0 left-0 h-1 bg-indigo-600"
-                       />
-                    </motion.div>
-                 );
-              })}
-           </AnimatePresence>
-        </div>
 
     </div>
   );
