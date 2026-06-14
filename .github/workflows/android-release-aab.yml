@@ -1,4 +1,4 @@
-name: SpeedMath Coach Android Release AAB
+﻿name: SpeedMath Coach Android Release AAB
 
 on:
   workflow_dispatch:
@@ -98,3 +98,5 @@ jobs:
           name: SpeedMathCoach-Android-v1.1.0-build4
           path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
+
+
