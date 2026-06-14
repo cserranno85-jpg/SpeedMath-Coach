@@ -46,64 +46,14 @@ async function main() {
   fs.mkdirSync('assets', { recursive: true });
   fs.mkdirSync('src/assets/icons', { recursive: true });
 
-  // 1. Generate Icon (1024x1024)
+  // 1. Load the canonical Icon (1024x1024)
   const iconSize = 1024;
-  const icon = new Jimp({ width: iconSize, height: iconSize });
-  
-  // Fill icon and compute graphics
-  for (let y = 0; y < iconSize; y++) {
-    for (let x = 0; x < iconSize; x++) {
-      const cx = 512, cy = 512;
-      const r = Math.hypot(x - cx, y - cy);
-      
-      // Radial glow
-      const glow = Math.max(0, 1 - r / 600);
-      const bgR = Math.round(11 + glow * 15);
-      const bgG = Math.round(17 + glow * 25);
-      const bgB = Math.round(30 + glow * 35);
-      
-      const distPlus = Math.min(
-        sdfBox(x, y, cx, cy, 45, 180),
-        sdfBox(x, y, cx, cy, 180, 45)
-      );
-      
-      const distCheck = Math.min(
-        sdfSegment(x, y, 320, 520, 460, 680),
-        sdfSegment(x, y, 460, 680, 740, 340)
-      ) - 36; // 72px thick
+  const icon = await Jimp.read('assets/icon.png');
 
-      const plusAlpha = Math.max(0, Math.min(1, 0.5 - distPlus / 3.0));
-      const checkAlpha = Math.max(0, Math.min(1, 0.5 - distCheck / 3.0));
-
-      let rOut = bgR;
-      let gOut = bgG;
-      let bOut = bgB;
-
-      // Layer plus (Cyan)
-      if (plusAlpha > 0) {
-        rOut = Math.round(rOut * (1 - plusAlpha) + 6 * plusAlpha);
-        gOut = Math.round(gOut * (1 - plusAlpha) + 182 * plusAlpha);
-        bOut = Math.round(bOut * (1 - plusAlpha) + 212 * plusAlpha);
-      }
-
-      // Layer checkmark (Green)
-      if (checkAlpha > 0) {
-        rOut = Math.round(rOut * (1 - checkAlpha) + 34 * checkAlpha);
-        gOut = Math.round(gOut * (1 - checkAlpha) + 197 * checkAlpha);
-        bOut = Math.round(bOut * (1 - checkAlpha) + 94 * checkAlpha);
-      }
-
-      const idx = (y * iconSize + x) * 4;
-      icon.bitmap.data[idx] = rOut;
-      icon.bitmap.data[idx + 1] = gOut;
-      icon.bitmap.data[idx + 2] = bOut;
-      icon.bitmap.data[idx + 3] = 255;
-    }
+  if (icon.bitmap.width !== iconSize || icon.bitmap.height !== iconSize) {
+    throw new Error(`assets/icon.png must be ${iconSize}x${iconSize}; found ${icon.bitmap.width}x${icon.bitmap.height}`);
   }
-
-  // Save the main icon using Jimp (writing binary PNG)
-  await icon.write('assets/icon.png');
-  console.log('Created valid PNG assets/icon.png');
+  console.log('Using canonical PNG assets/icon.png');
 
   // 2. Downsample PWA Icons
   const sizes = [48, 72, 96, 128, 192, 256, 512];

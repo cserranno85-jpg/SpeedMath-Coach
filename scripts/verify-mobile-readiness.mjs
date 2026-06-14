@@ -12,6 +12,60 @@ function logError(msg) {
   failed = true;
 }
 
+function readPngMetadata(filePath) {
+  const buffer = fs.readFileSync(filePath);
+  const isPng = buffer.length >= 29 &&
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47 &&
+    buffer[4] === 0x0d &&
+    buffer[5] === 0x0a &&
+    buffer[6] === 0x1a &&
+    buffer[7] === 0x0a;
+
+  if (!isPng) {
+    return { isPng: false };
+  }
+
+  return {
+    isPng: true,
+    width: buffer.readUInt32BE(16),
+    height: buffer.readUInt32BE(20),
+    bitDepth: buffer[24],
+    colorType: buffer[25],
+  };
+}
+
+function pngColorTypeHasAlpha(colorType) {
+  return colorType === 4 || colorType === 6;
+}
+
+function verifyFinalIconSource(filePath) {
+  if (!fs.existsSync(filePath)) {
+    logError(`${filePath} is missing`);
+    return;
+  }
+
+  try {
+    const metadata = readPngMetadata(filePath);
+    if (!metadata.isPng) {
+      logError(`${filePath} is not a valid PNG`);
+      return;
+    }
+
+    if (metadata.width !== 1024 || metadata.height !== 1024) {
+      logError(`${filePath} must be 1024x1024, found ${metadata.width}x${metadata.height}`);
+    }
+
+    if (pngColorTypeHasAlpha(metadata.colorType)) {
+      logError(`${filePath} must be RGB/no-alpha PNG, found PNG color type ${metadata.colorType}`);
+    }
+  } catch (err) {
+    logError(`Failed to verify ${filePath}: ${err.message}`);
+  }
+}
+
 // 1. check capacitor.config.ts contains key names
 try {
   const capConfig = fs.readFileSync('capacitor.config.ts', 'utf8');
@@ -124,7 +178,55 @@ try {
   logError(`Failed during stale reference scanning: ${err.message}`);
 }
 
-// 7. Verify all .png files outside excluded dirs have valid header
+// 7. Verify final icon source assets
+verifyFinalIconSource('assets/icon.png');
+verifyFinalIconSource('assets/speedmath-ios-icon-correct.png');
+
+// 8. Verify PWA manifest icon references point to real PNG files
+try {
+  const manifestPath = 'src/manifest.webmanifest';
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  for (const icon of manifest.icons ?? []) {
+    const iconPath = path.join('src', icon.src);
+    const metadata = fs.existsSync(iconPath) ? readPngMetadata(iconPath) : null;
+
+    if (!metadata) {
+      logError(`${manifestPath} references missing icon: ${icon.src}`);
+      continue;
+    }
+
+    if (icon.type !== 'image/png') {
+      logError(`${manifestPath} icon ${icon.src} must declare type image/png`);
+    }
+
+    if (path.extname(icon.src).toLowerCase() !== '.png') {
+      logError(`${manifestPath} icon ${icon.src} must use a .png file extension`);
+    }
+
+    if (!metadata.isPng) {
+      logError(`${manifestPath} icon ${icon.src} must point to a PNG file`);
+      continue;
+    }
+
+    if (metadata.width !== metadata.height || `${metadata.width}x${metadata.height}` !== icon.sizes) {
+      logError(`${manifestPath} icon ${icon.src} declares ${icon.sizes}, found ${metadata.width}x${metadata.height}`);
+    }
+  }
+} catch (err) {
+  logError(`Failed to verify src/manifest.webmanifest icons: ${err.message}`);
+}
+
+// 9. Verify the brand asset generator uses assets/icon.png as input, not an output target
+try {
+  const brandGenerator = fs.readFileSync('scripts/generate-speedmath-assets.mjs', 'utf8');
+  if (brandGenerator.includes("icon.write('assets/icon.png'") || brandGenerator.includes('icon.write("assets/icon.png"')) {
+    logError('scripts/generate-speedmath-assets.mjs must not overwrite final source asset assets/icon.png');
+  }
+} catch (err) {
+  logError(`Failed to read scripts/generate-speedmath-assets.mjs: ${err.message}`);
+}
+
+// 10. Verify all .png files outside excluded dirs have valid header
 function scanPngs(dir) {
   const files = fs.readdirSync(dir);
   for (const file of files) {

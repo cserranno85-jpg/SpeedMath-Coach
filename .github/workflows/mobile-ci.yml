@@ -135,6 +135,31 @@ jobs:
           console.log('All checked PNG files have valid PNG signatures.');
           NODE
 
+      - name: Normalize generated PWA manifest icons back to PNG
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'src/manifest.webmanifest';
+
+          const raw = fs.readFileSync(path, 'utf8').replace(/^\uFEFF/, '');
+          const manifest = JSON.parse(raw);
+
+          if (Array.isArray(manifest.icons)) {
+            for (const icon of manifest.icons) {
+              if (typeof icon.src === 'string') {
+                icon.src = icon.src.replace(/\.webp$/i, '.png');
+                icon.type = 'image/png';
+              }
+            }
+          }
+
+          fs.writeFileSync(path, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+          NODE
+
+          rm -f src/assets/icons/*.webp
+
+
       - name: Run mobile readiness verifier
         run: npm run verify:mobile
 
@@ -151,3 +176,4 @@ jobs:
           name: speedmath-coach-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
