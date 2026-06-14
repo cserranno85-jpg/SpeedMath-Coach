@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Settings, MathProblem, Difficulty, GameMode } from '../types';
 import { sounds } from '../utils/soundEngine';
 import { generateProblem, getOperationSymbol } from '../utils/mathGenerator';
-import { Timer, XCircle, Delete, Home } from 'lucide-react';
+import { Timer, XCircle, Delete, Home, Check, Lightbulb, Snowflake } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { evaluateAchievements, Badge } from '../utils/streakAndAchievements';
+import { formatDuration, normalizeDurationSeconds } from '../utils/durationPresets';
+import { loadProgress } from '../utils/progressStorage';
 import pibotMascot from '../assets/images/pibot-mascot.jpg';
 
 interface GameProps {
@@ -14,7 +16,8 @@ interface GameProps {
 }
 
 export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
-  const [timeLeft, setTimeLeft] = useState(settings.gameDurationSeconds);
+  const gameDurationSeconds = normalizeDurationSeconds(settings.gameDurationSeconds);
+  const [timeLeft, setTimeLeft] = useState(() => gameDurationSeconds);
   const [score, setScore] = useState(0);
   const [totalSubmissions, setTotalSubmissions] = useState(0);
   const [history, setHistory] = useState<any[]>([]);
@@ -33,6 +36,8 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
   const [freezeTimeRemaining, setFreezeTimeRemaining] = useState(0);
   
   const questionStartTimeRef = useRef(Date.now());
+  const gameEndedRef = useRef(false);
+  const transitionTimeoutRef = useRef<number | null>(null);
 
   // Achievement unlocks are tracked live but displayed only after active gameplay ends.
   const savedProgressRef = useRef<any[]>([]);
@@ -50,17 +55,19 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
   useEffect(() => { historyRef.current = history; }, [history]);
   useEffect(() => { streakRef.current = streak; }, [streak]);
 
-  // Load initial progress and find previously unlocked badges
   useEffect(() => {
-    const raw = localStorage.getItem('speedMathProgress');
-    let parsed: any[] = [];
-    if (raw) {
-      try {
-        parsed = JSON.parse(raw);
-      } catch (e) {}
-    }
+    return () => {
+      gameEndedRef.current = true;
+      if (transitionTimeoutRef.current !== null) {
+        window.clearTimeout(transitionTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const resetBadgeBaseline = useCallback(() => {
+    const parsed = loadProgress();
     savedProgressRef.current = parsed;
-    
+
     try {
       const initialBadges = evaluateAchievements(parsed);
       const initialUnlocked = new Set<string>();
@@ -72,23 +79,53 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
       previouslyUnlockedBadgeIdsRef.current = initialUnlocked;
     } catch (e) {
       console.error(e);
+      previouslyUnlockedBadgeIdsRef.current = new Set();
     }
   }, []);
 
-  // Initialize first problem
+  // Reset all round-owned state whenever a new keyed game starts.
   useEffect(() => {
-    setCurrentProblem(generateProblem(currentDifficulty, settings.operations));
+    const nextProblem = generateProblem(settings.difficulty, settings.operations);
+    if (transitionTimeoutRef.current !== null) {
+      window.clearTimeout(transitionTimeoutRef.current);
+      transitionTimeoutRef.current = null;
+    }
+    gameEndedRef.current = false;
+    roundUnlockedBadgesRef.current = [];
+    scoreRef.current = 0;
+    totalSubmissionsRef.current = 0;
+    historyRef.current = [];
+    streakRef.current = 0;
+
+    setTimeLeft(gameDurationSeconds);
+    setScore(0);
+    setTotalSubmissions(0);
+    setHistory([]);
+    setCurrentDifficulty(settings.difficulty);
+    setCurrentProblem(nextProblem);
+    setStreak(0);
+    setProblemIndex(0);
+    setInputValue('');
+    setFeedback(null);
+    setFreezesLeft(1);
+    setHintsLeft(1);
+    setFreezeTimeRemaining(0);
     questionStartTimeRef.current = Date.now();
-  }, [currentDifficulty, settings.operations]);
+    resetBadgeBaseline();
+  }, [gameDurationSeconds, resetBadgeBaseline, settings.difficulty, settings.operations]);
 
   // Timer countdown
   useEffect(() => {
     if (settings.gameMode === GameMode.UNTIMED) return;
     if (timeLeft <= 0) {
-      onEndGame(score, totalSubmissions, history, roundUnlockedBadgesRef.current);
+      if (!gameEndedRef.current) {
+        gameEndedRef.current = true;
+        onEndGame(score, totalSubmissions, history, roundUnlockedBadgesRef.current);
+      }
       return;
     }
     const timer = setInterval(() => {
+      if (gameEndedRef.current) return;
       setFreezeTimeRemaining(freeze => {
         if (freeze > 0) {
           // Compensate question start ref by 1s (1000ms) for each frozen second of gameplay
@@ -97,7 +134,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
         } else {
           setTimeLeft(prev => {
              const nextVal = prev - 1;
-             if (nextVal > 0 && nextVal <= 10) {
+             if (!gameEndedRef.current && nextVal > 0 && nextVal <= 5) {
                 sounds.playCountdownTick(nextVal);
              }
              return nextVal;
@@ -110,8 +147,9 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
   }, [timeLeft, onEndGame, score, totalSubmissions, history, settings.gameMode]);
 
   const handleCorrectAnswer = useCallback((timeSpentParam?: number) => {
+    if (gameEndedRef.current) return;
     setFeedback('correct');
-    sounds.playCorrect();
+    sounds.play('correct');
     
     // timeSpentParam can be passed if we call this from event handler to ensure exact timing
     const timeSpent = timeSpentParam ?? ((Date.now() - questionStartTimeRef.current) / 1000);
@@ -190,18 +228,20 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
     }
 
     // Almost immediate next question
-    setTimeout(() => {
+    transitionTimeoutRef.current = window.setTimeout(() => {
+       if (gameEndedRef.current) return;
        setCurrentDifficulty(nextDifficulty);
        setCurrentProblem(generateProblem(nextDifficulty, settings.operations));
        setProblemIndex(i => i + 1);
        setInputValue('');
        setFeedback(null);
        questionStartTimeRef.current = Date.now();
+       transitionTimeoutRef.current = null;
     }, 50); // extremely fast swipe delay
   }, [currentDifficulty, currentProblem, settings]);
 
   const handleDigit = useCallback((digit: string) => {
-     if (!currentProblem || feedback === 'correct') return; // ignore if transitioning
+     if (gameEndedRef.current || !currentProblem || feedback === 'correct') return; // ignore if transitioning
 
      let baseStr = inputValue;
      if (feedback === 'incorrect') {
@@ -220,17 +260,17 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
          handleCorrectAnswer(ts);
      } else if (!correctAnswerStr.startsWith(newValue)) {
          setFeedback('incorrect');
-         sounds.playIncorrect();
+         sounds.play('incorrect');
          setTotalSubmissions(t => t + 1);
          setStreak(0);
      } else {
-         sounds.playClick();
+         sounds.play('keypadTap');
      }
   }, [currentProblem, inputValue, feedback, handleCorrectAnswer]);
 
   const handleBackspace = useCallback(() => {
-      if (feedback === 'correct') return;
-      sounds.playClick();
+      if (gameEndedRef.current || feedback === 'correct') return;
+      sounds.play('uiTap');
       if (feedback === 'incorrect') {
           setInputValue('');
           setFeedback(null);
@@ -239,8 +279,24 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
       }
   }, [feedback]);
 
+  const handleEnter = useCallback(() => {
+    if (gameEndedRef.current || !currentProblem || feedback === 'correct') return;
+
+    if (inputValue === currentProblem.correctAnswer.toString()) {
+      const ts = (Date.now() - questionStartTimeRef.current) / 1000;
+      handleCorrectAnswer(ts);
+      return;
+    }
+
+    sounds.play('incorrect');
+    setFeedback('incorrect');
+    setTotalSubmissions(t => t + 1);
+    setStreak(0);
+  }, [currentProblem, feedback, handleCorrectAnswer, inputValue]);
+
   const onSkip = useCallback(() => {
-      sounds.playClick();
+      if (gameEndedRef.current) return;
+      sounds.play('uiTap');
       setStreak(0);
       setInputValue('');
       setFeedback(null);
@@ -250,18 +306,20 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
   }, [currentDifficulty, settings.operations]);
 
   const activateFreezeTime = useCallback(() => {
+     if (gameEndedRef.current) return;
      if (settings.gameMode === GameMode.UNTIMED) return;
      if (freezesLeft <= 0 || freezeTimeRemaining > 0) return;
      
-     sounds.playFreeze();
+     sounds.play('primaryTap');
      setFreezesLeft(f => f - 1);
      setFreezeTimeRemaining(5);
   }, [freezesLeft, freezeTimeRemaining, settings.gameMode]);
 
   const activateHint = useCallback(() => {
+     if (gameEndedRef.current) return;
      if (!currentProblem || hintsLeft <= 0) return;
      
-     sounds.playHint();
+     sounds.play('primaryTap');
      const correctAnswerStr = currentProblem.correctAnswer.toString();
      
      // Find the common prefix of current inputValue and the correctAnswerStr
@@ -301,9 +359,11 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
       } else if (e.key === 'Backspace') {
         handleBackspace();
       } else if (e.key === ' ' || e.key === 'Enter') {
+         e.preventDefault();
          if (feedback === 'incorrect') {
-             e.preventDefault();
              onSkip();
+         } else {
+             handleEnter();
          }
       } else if (keyUpper === 'F') {
          activateFreezeTime();
@@ -313,188 +373,182 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleDigit, handleBackspace, onSkip, feedback, activateFreezeTime, activateHint]);
+  }, [handleDigit, handleBackspace, onSkip, feedback, activateFreezeTime, activateHint, handleEnter]);
 
   if (!currentProblem) return null;
 
+  const accuracy = totalSubmissions > 0 ? Math.round((score / totalSubmissions) * 100) : 0;
+  const statCards = [
+    { label: 'Score', value: score, tone: 'from-yellow-300 to-orange-400 text-slate-950' },
+    { label: 'Accuracy', value: `${accuracy}%`, tone: 'from-emerald-300 to-teal-400 text-slate-950' },
+    { label: 'Question', value: problemIndex + 1, tone: 'from-cyan-300 to-blue-400 text-slate-950' },
+  ];
+
   return (
-    <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[100dvh] relative px-4 select-none">
-       
-       {/* Highly Visually Prominent Top Dashboard Layout */}
-       <div className="absolute top-4 left-[2%] right-[2%] md:left-[5%] md:right-[5%] max-w-3xl mx-auto flex items-center justify-between gap-3 bg-[#FAF7EC] border-4 border-slate-900 rounded-[2rem] px-4 py-2.5 md:py-3.5 shadow-[5px_5px_0_0_#0f172a] z-20">
-          
-          {/* Left Block: Score and Streak Badge */}
-          <div className="flex items-center gap-2">
-             <div className="flex flex-col">
-                <span className="text-[9px] uppercase tracking-widest text-slate-400 font-extrabold leading-none mb-1">SCORE</span>
-                <span className="text-xl md:text-2xl font-mono font-black text-slate-800 leading-none">{score}</span>
+    <div className="w-full max-w-6xl mx-auto min-h-[calc(100dvh-1.5rem)] flex flex-col gap-3 select-none">
+       <div className="rounded-3xl border border-white/15 bg-slate-950/78 shadow-[0_18px_55px_rgba(0,0,0,0.35)] px-3 py-3 sm:px-4 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+             <div className="text-[10px] uppercase font-black text-cyan-200">Level {currentDifficulty}</div>
+             <div className="flex items-center gap-2 mt-1">
+                <span className="text-xl sm:text-2xl font-mono font-black text-white">{score}</span>
+                {streak > 0 && (
+                  <span className="rounded-full bg-orange-400 px-2 py-0.5 text-[11px] font-black text-slate-950" title={`${streak} consecutive correct answers`}>
+                    Streak {streak}
+                  </span>
+                )}
              </div>
-             {streak > 0 && (
-                <div className="flex items-center gap-0.5 bg-orange-50 border border-orange-100 text-orange-600 px-1.5 py-1 rounded-lg text-xs font-black animate-bounce shrink-0" title={`${streak} consecutive correct answers`}>
-                   <span>🔥</span>
-                   <span className="font-mono">{streak}</span>
-                </div>
-              )}
           </div>
 
-          {/* Center Block: VERY noticeable Bigger & More Noticeable Clock */}
-          {settings.gameMode === GameMode.TIMED && (
-             <div className="flex items-center justify-center shrink-0">
-                {freezeTimeRemaining > 0 ? (
-                   <div className="animate-pulse flex items-center gap-1.5 bg-cyan-100 border-2 border-cyan-400 px-3 py-1 md:px-4 md:py-1.5 rounded-2xl shadow-[0_0_15px_rgba(6,182,212,0.4)] text-cyan-700 transform scale-105">
-                      <span className="animate-spin text-md md:text-lg">❄️</span>
-                      <span className="font-mono text-sm md:text-base font-black tracking-widest uppercase">FROZEN {freezeTimeRemaining}s</span>
-                   </div>
-                ) : (
-                   <div className={`transition-all duration-300 flex items-center gap-2 md:gap-3 px-4 py-1.5 md:px-6 md:py-2.5 rounded-2xl border ${
-                      timeLeft <= 10 
-                        ? 'bg-rose-50 border-rose-500 shadow-[0_0_25px_rgba(244,63,94,0.5)] scale-110 md:scale-125 text-rose-600 animate-pulse' 
-                        : 'bg-slate-900 border-slate-950 text-amber-400 shadow-md'
-                   }`}>
-                      <Timer className={`w-4 h-4 md:w-6 md:h-6 ${timeLeft <= 10 ? 'animate-bounce text-rose-500' : 'text-amber-400'}`} />
-                      <span className={`font-mono text-xl md:text-4xl font-black tracking-widest ${timeLeft <= 10 ? 'text-rose-600' : 'text-slate-100'}`}>
-                         {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
-                      </span>
-                   </div>
-                )}
+          {settings.gameMode === GameMode.TIMED ? (
+             <div className={`shrink-0 flex items-center gap-2 rounded-2xl border px-3 py-2 ${
+                freezeTimeRemaining > 0
+                  ? 'border-cyan-300 bg-cyan-300 text-slate-950 animate-pulse'
+                  : timeLeft <= 10
+                    ? 'border-rose-300 bg-rose-500 text-white animate-pulse shadow-[0_0_24px_rgba(244,63,94,0.55)]'
+                    : 'border-yellow-300/70 bg-blue-950 text-yellow-300'
+             }`}>
+                {freezeTimeRemaining > 0 ? <Snowflake className="w-4 h-4" /> : <Timer className="w-4 h-4" />}
+                <span className="font-mono text-2xl sm:text-3xl font-black leading-none">
+                  {freezeTimeRemaining > 0 ? `${freezeTimeRemaining}s` : formatDuration(timeLeft)}
+                </span>
+             </div>
+          ) : (
+             <div className="shrink-0 rounded-2xl border border-emerald-300/60 bg-emerald-400 px-3 py-2 text-sm font-black text-slate-950">
+                Practice
              </div>
           )}
 
-          {/* Right Block: Home Button */}
-          <button 
-             onClick={() => { sounds.playClick(); onHome(); }}
-             className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 border-2 border-slate-900 shadow-[2px_2px_0_0_#0f172a] shrink-0 cursor-pointer"
+          <button
+             onClick={() => { sounds.play('uiTap'); onHome(); }}
+             className="premium-btn premium-btn-neutral shrink-0 !min-h-0 !rounded-2xl !p-3 text-white"
+             title="Home"
           >
-             <Home className="w-3.5 h-3.5" />
-             <span className="hidden sm:inline font-bold">Home</span>
+             <Home className="w-4 h-4" />
           </button>
        </div>
 
-       {/* Main Page Layout */}
-       <div className="w-full flex-1 flex flex-col items-center justify-center mt-24 md:mt-24">
-           <div className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-4">Level {currentDifficulty}</div>
-           
-           {/* Equation with fast swipe animation */}
-           <AnimatePresence mode="popLayout">
-             <motion.div 
-               key={problemIndex} // update exactly on next problem
-               initial={{ opacity: 0, scale: 0.9, y: 20 }}
-               animate={{ opacity: 1, scale: 1, y: 0 }}
-               exit={{ opacity: 0, scale: 1.1, y: -20 }}
-               transition={{ duration: 0.15 }}
-               className="flex flex-col items-center justify-center mb-8 relative w-full"
-             >
-                <div className="text-7xl md:text-[140px] font-black text-slate-800 tracking-tighter flex items-center gap-4 md:gap-8 z-10 my-4 leading-none font-sans">
-                   <span>{currentProblem.num1}</span>
-                   <span className="text-slate-300 font-light">{getOperationSymbol(currentProblem.operation)}</span>
-                   <span>{currentProblem.num2}</span>
-                   <span className="text-slate-200 font-thin italic">=</span>
-                   
-                   {/* Typed Answer Field */}
-                   <span className={`w-32 md:w-56 h-24 md:h-40 border-b-4 ml-2 flex items-center justify-center transition-colors duration-100 ${
-                       feedback === 'correct' ? 'border-emerald-500 text-emerald-500' : 
-                       feedback === 'incorrect' ? 'border-rose-500 text-rose-500' : 
-                       inputValue ? 'border-slate-800 text-slate-800' : 'border-slate-300 text-slate-300'
-                   }`}>
-                      {inputValue ? (
-                          <span className="text-7xl md:text-[140px] font-black">{inputValue}</span>
-                      ) : (
-                          <span className="opacity-0">?</span> 
-                      )}
-                   </span>
+       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-3 lg:gap-5 items-stretch min-h-0">
+          <div className="rounded-3xl border border-white/15 bg-blue-950/72 shadow-[0_18px_55px_rgba(0,0,0,0.32)] p-4 sm:p-5 flex flex-col justify-between gap-3 min-h-0 overflow-hidden">
+             <div className="grid grid-cols-3 gap-2">
+                {statCards.map((card) => (
+                  <div key={card.label} className={`rounded-2xl bg-gradient-to-br ${card.tone} p-3 shadow-[0_12px_24px_rgba(0,0,0,0.2)]`}>
+                    <div className="text-[10px] uppercase font-black opacity-80">{card.label}</div>
+                    <div className="text-xl sm:text-2xl font-mono font-black">{card.value}</div>
+                  </div>
+                ))}
+             </div>
+
+             <div className="flex-1 flex flex-col items-center justify-center gap-4 min-h-[190px]">
+                <AnimatePresence mode="popLayout">
+                  <motion.div
+                    key={problemIndex}
+                    initial={{ opacity: 0, scale: 0.96, y: 14 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 1.04, y: -14 }}
+                    transition={{ duration: 0.15 }}
+                    className="w-full"
+                  >
+                    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-5xl sm:text-6xl md:text-7xl font-black leading-none text-white">
+                       <span>{currentProblem.num1}</span>
+                       <span className="text-cyan-300">{getOperationSymbol(currentProblem.operation)}</span>
+                       <span>{currentProblem.num2}</span>
+                       <span className="text-blue-200">=</span>
+                       <span className={`min-w-24 sm:min-w-32 h-16 sm:h-20 border-b-4 flex items-center justify-center ${
+                          feedback === 'correct' ? 'border-emerald-300 text-emerald-300' :
+                          feedback === 'incorrect' ? 'border-rose-300 text-rose-300' :
+                          inputValue ? 'border-yellow-300 text-yellow-300' : 'border-white/30 text-white/30'
+                       }`}>
+                          {inputValue || '?'}
+                       </span>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+
+                <div className="w-full max-w-xl rounded-2xl border border-cyan-300/20 bg-slate-950/45 p-3 flex items-center gap-3">
+                  <img src={pibotMascot} alt="Pi-bot Coach" className={`w-14 h-14 rounded-2xl object-cover shrink-0 transition ${feedback === 'correct' ? 'scale-105' : feedback === 'incorrect' ? 'grayscale opacity-70' : ''}`} referrerPolicy="no-referrer" />
+                  <div className="min-w-0">
+                    <div className="text-[10px] uppercase font-black text-cyan-200">Pi-bot Coach</div>
+                    <div className="text-xs sm:text-sm text-blue-50 leading-snug">
+                      {feedback === 'incorrect' ? 'Adjust the answer or skip to keep your rhythm.' : 'Stay quick, accurate, and keep the timer in view.'}
+                    </div>
+                  </div>
                 </div>
-             </motion.div>
-           </AnimatePresence>
+             </div>
 
-           {/* Power-up HUD */}
-           <div className="w-full max-w-sm flex flex-col items-center">
-              {/* Power-up Actions Panel */}
-              <div className="w-full bg-[#FAF7EC] border-4 border-slate-900 p-2.5 rounded-2xl flex gap-2.5 shadow-[3px_3px_0_0_#0f172a] mb-4">
-                 <button
-                    onClick={activateFreezeTime}
-                    disabled={settings.gameMode === GameMode.UNTIMED || freezesLeft <= 0 || freezeTimeRemaining > 0}
-                    className={`flex-1 py-3 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all text-[11px] font-extrabold tracking-wider uppercase cursor-pointer select-none active:scale-95 ${
-                       settings.gameMode === GameMode.UNTIMED ? 'opacity-30 cursor-not-allowed' :
-                       freezeTimeRemaining > 0 ? 'bg-cyan-500 text-white border-2 border-slate-900 animate-pulse shadow-md shadow-cyan-100' :
-                       freezesLeft > 0 ? 'bg-cyan-100 border-2 border-slate-900 text-cyan-800 hover:bg-cyan-200 shadow-[2px_2px_0_0_#0f172a]' :
-                       'bg-slate-100 border border-slate-200 text-slate-300'
-                    }`}
-                    title="Freeze timer for 5 seconds (Hotkeys: F)"
-                 >
-                    <span className="text-xs">❄️</span>
-                    <span>Freeze ({freezesLeft})</span>
-                 </button>
+             <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={activateFreezeTime}
+                  disabled={settings.gameMode === GameMode.UNTIMED || freezesLeft <= 0 || freezeTimeRemaining > 0}
+                  className={`premium-btn premium-btn-small text-xs ${
+                    settings.gameMode === GameMode.UNTIMED || freezesLeft <= 0
+                      ? 'is-disabled'
+                      : freezeTimeRemaining > 0
+                        ? 'premium-chip is-active animate-pulse'
+                        : 'premium-btn-secondary'
+                  }`}
+                >
+                  <Snowflake className="w-4 h-4" /> Freeze ({freezesLeft})
+                </button>
+                <button
+                  onClick={activateHint}
+                  disabled={hintsLeft <= 0}
+                  className={`premium-btn premium-btn-small text-xs ${
+                    hintsLeft > 0 ? 'premium-btn-primary' : 'is-disabled'
+                  }`}
+                >
+                  <Lightbulb className="w-4 h-4" /> Hint ({hintsLeft})
+                </button>
+             </div>
+          </div>
 
-                 <button
-                    onClick={activateHint}
-                    disabled={hintsLeft <= 0}
-                    className={`flex-1 py-3 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all text-[11px] font-extrabold tracking-wider uppercase cursor-pointer select-none active:scale-95 ${
-                       hintsLeft > 0 ? 'bg-amber-100 border-2 border-slate-900 text-amber-900 hover:bg-amber-200 shadow-[2px_2px_0_0_#0f172a]' :
-                       'bg-slate-100 border border-slate-200 text-slate-300'
-                    }`}
-                    title="Fills first/next correct digit of the answer (Hotkeys: H)"
-                  >
-                    <span className="text-xs">💡</span>
-                    <span>Hint ({hintsLeft})</span>
-                 </button>
-              </div>
-           </div>
+          <div className="rounded-3xl border border-white/15 bg-slate-950/78 shadow-[0_18px_55px_rgba(0,0,0,0.32)] p-3 sm:p-4 flex flex-col justify-end gap-2">
+             <AnimatePresence>
+                {feedback === 'incorrect' && (
+                   <motion.button
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      onClick={onSkip}
+                      className="premium-btn premium-btn-danger w-full text-xs"
+                   >
+                      <XCircle className="w-4 h-4" /> Skip Question
+                   </motion.button>
+                )}
+             </AnimatePresence>
 
-           {/* Number Pad Container */}
-           <div className="w-full max-w-sm mt-2">
-               <AnimatePresence>
-                  {feedback === 'incorrect' && (
-                     <motion.div 
-                        initial={{ opacity: 0, height: 0 }} 
-                        animate={{ opacity: 1, height: 'auto' }} 
-                        exit={{ opacity: 0, height: 0 }}
-                        className="w-full mb-4 flex justify-center"
-                     >
-                        <button 
-                           onClick={onSkip}
-                           className="flex items-center gap-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 px-6 py-3 rounded-xl font-bold tracking-widest uppercase text-xs transition-colors w-full justify-center"
-                        >
-                           <XCircle className="w-4 h-4" /> Skip Question
-                        </button>
-                     </motion.div>
-                  )}
-               </AnimatePresence>
-
-               <div className="grid grid-cols-3 gap-2 md:gap-4">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-                     <button
-                        key={num}
-                        onClick={() => handleDigit(num.toString())}
-                        className="bg-[#FAF7EC] hover:bg-amber-100/80 hover:scale-[1.02] active:scale-95 text-slate-900 border-4 border-slate-900 text-2xl md:text-4xl font-black aspect-square rounded-2xl md:rounded-[32px] flex items-center justify-center shadow-[3px_3px_0_0_#0f172a] cursor-pointer transition-all"
-                     >
-                        {num}
-                     </button>
-                  ))}
-                  
-                  {/* Empty cell or dot ? We don't have decimals. */}
-                  <div className="bg-amber-50 rounded-2xl md:rounded-[32px] border-4 border-slate-900 flex items-center justify-center overflow-hidden p-1 shadow-[3px_3px_0_0_#0f172a] relative"><img src={pibotMascot} alt="Pi" className={`w-full h-full object-cover rounded-xl transition-all duration-150 animate-float-pibot ${feedback === 'correct' ? 'scale-[1.15] rotate-6 animate-none' : feedback === 'incorrect' ? 'scale-90 saturate-50 opacity-55 animate-none' : 'scale-100 hover:scale-105'}`} referrerPolicy="no-referrer" /></div>
-                  
-                  <button
-                     onClick={() => handleDigit('0')}
-                     className="bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-800 md:text-3xl font-black aspect-square rounded-2xl md:rounded-[32px] flex items-center justify-center transition-colors"
-                  >
-                     0
-                  </button>
-
-                  <button
-                     onClick={handleBackspace}
-                     className="keypad-delete-btn text-white aspect-square rounded-2xl md:rounded-[32px] flex items-center justify-center transform active:translate-y-0.5 cursor-pointer shadow-red-200 shadow-sm"
-                  >
-                     <Delete className="w-6 h-6 md:w-8 md:h-8" />
-                  </button>
-               </div>
-               
-               <p className="text-center text-[10px] uppercase font-bold tracking-widest text-slate-300 mt-6 md:mt-8 hidden md:block">
-                  Keyboard input supported
-               </p>
-           </div>
+             <div className="grid grid-cols-3 gap-2">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+                   <button
+                      key={num}
+                      onClick={() => handleDigit(num.toString())}
+                      className="premium-btn premium-keypad h-14 min-[390px]:h-16 md:h-20 text-2xl md:text-3xl"
+                   >
+                      {num}
+                   </button>
+                ))}
+                <button
+                   onClick={handleBackspace}
+                   className="premium-btn premium-btn-danger h-14 min-[390px]:h-16 md:h-20"
+                   title="Delete"
+                >
+                   <Delete className="w-6 h-6" />
+                </button>
+                <button
+                   onClick={() => handleDigit('0')}
+                   className="premium-btn premium-keypad h-14 min-[390px]:h-16 md:h-20 text-2xl md:text-3xl"
+                >
+                   0
+                </button>
+                <button
+                   onClick={handleEnter}
+                   className="premium-btn premium-btn-success h-14 min-[390px]:h-16 md:h-20"
+                   title="Enter"
+                >
+                   <Check className="w-7 h-7 stroke-[3]" />
+                </button>
+             </div>
+          </div>
        </div>
-
     </div>
   );
 };

@@ -26,6 +26,7 @@ export interface Settings {
   operations: Record<Operation, boolean>;
   adaptiveDifficulty: boolean;
   gameDurationSeconds: number;
+  theme: 'light' | 'dark';
 }
 
 export interface MathProblem {

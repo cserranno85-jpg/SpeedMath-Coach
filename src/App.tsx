@@ -1,26 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Difficulty, Operation, GameMode } from './types';
+import { Settings, Operation } from './types';
 import { Menu } from './components/Menu';
 import { Game } from './components/Game';
 import { GameOver } from './components/GameOver';
 import { Stats } from './components/Stats';
 import { motion, AnimatePresence } from 'motion/react';
 import { Badge } from './utils/streakAndAchievements';
+import { appendProgress } from './utils/progressStorage';
+import { DEFAULT_SETTINGS, loadSettings, saveSettings } from './utils/settingsValidation';
 
 type AppState = 'MENU' | 'PLAYING' | 'GAMEOVER' | 'STATS';
-
-const DEFAULT_SETTINGS: Settings = {
-  difficulty: Difficulty.BEGINNER,
-  gameMode: GameMode.TIMED,
-  operations: {
-    [Operation.ADDITION]: true,
-    [Operation.SUBTRACTION]: false,
-    [Operation.MULTIPLICATION]: false,
-    [Operation.DIVISION]: false,
-  },
-  adaptiveDifficulty: false,
-  gameDurationSeconds: 60,
-};
 
 export default function App() {
   const [appState, setAppState] = useState<AppState>('MENU');
@@ -34,24 +23,23 @@ export default function App() {
 
   // Load settings from local storage
   useEffect(() => {
-    const savedSettings = localStorage.getItem('speedMathSettings');
-    if (savedSettings) {
-      try {
-        setSettings(JSON.parse(savedSettings));
-      } catch(e) {}
-    }
+    const normalizedSettings = loadSettings();
+    setSettings(normalizedSettings);
+    saveSettings(normalizedSettings);
   }, []);
 
-  const handleSettingsChange = (newSettings: Settings) => {
-    // Ensure at least one operation is selected
-    const hasOp = Object.values(newSettings.operations).some(v => v);
-    if (!hasOp) newSettings.operations[Operation.ADDITION] = true;
+  useEffect(() => {
+    document.documentElement.dataset.theme = settings.theme;
+    document.documentElement.style.colorScheme = settings.theme;
+  }, [settings.theme]);
 
-    setSettings(newSettings);
-    localStorage.setItem('speedMathSettings', JSON.stringify(newSettings));
+  const handleSettingsChange = (newSettings: Settings) => {
+    const normalizedSettings = saveSettings(newSettings);
+    setSettings(normalizedSettings);
   };
 
   const handleStartGame = () => {
+    if (appState === 'PLAYING') return;
     setAppState('PLAYING');
   };
 
@@ -62,25 +50,25 @@ export default function App() {
     setLastUnlockedBadges(unlockedBadges);
     setAppState('GAMEOVER');
 
-    // Here you could also save history to localStorage for long-term progress tracking
-    const existingProgressStr = localStorage.getItem('speedMathProgress');
-    let progress = [];
-    if (existingProgressStr) {
-      try { progress = JSON.parse(existingProgressStr); } catch(e){}
-    }
-    progress.push({
+    appendProgress({
       date: new Date().toISOString(),
       score,
       totalSubmissions,
       settings,
       history
     });
-    localStorage.setItem('speedMathProgress', JSON.stringify(progress));
   };
 
+  const gameSessionKey = [
+    settings.gameMode,
+    settings.gameDurationSeconds,
+    settings.difficulty,
+    Object.values(Operation).filter(op => settings.operations[op]).join(',')
+  ].join('|');
+
   return (
-    <div className="min-h-[100dvh] w-full relative bg-gradient-to-br from-[#FAF5E6] via-[#EFE7D0] to-[#DFD6BA] text-slate-900 font-sans tracking-tight flex items-center justify-center p-3 md:p-8 selection:bg-indigo-100 overflow-x-hidden overflow-y-auto pb-safe pr-safe pl-safe pt-safe">
-       <div className="absolute inset-0 bg-[radial-gradient(#6366f1_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.03] pointer-events-none"></div>
+    <div className="app-shell min-h-[100dvh] w-full relative font-sans flex items-stretch justify-center p-3 md:p-8 selection:bg-cyan-300/30 overflow-x-hidden overflow-y-auto pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] pr-[calc(env(safe-area-inset-right,0px)+0.75rem)] pl-[calc(env(safe-area-inset-left,0px)+0.75rem)] pt-[calc(env(safe-area-inset-top,0px)+0.75rem)]">
+       <div className="app-shell-grid absolute inset-0 pointer-events-none"></div>
        
        <div className="relative z-10 w-full flex items-center justify-center">
           <AnimatePresence mode="wait">
@@ -112,6 +100,7 @@ export default function App() {
                    className="w-full flex justify-center"
                  >
                     <Game 
+                      key={gameSessionKey}
                       settings={settings}
                       onEndGame={handleEndGame}
                       onHome={() => setAppState('MENU')}
