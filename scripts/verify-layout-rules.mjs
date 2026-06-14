@@ -96,10 +96,24 @@ expectRule('Answer buttons use responsive bounded sizing', '.answer-choice', [
   /font-size:\s*clamp\(/,
 ]);
 
+expectRule('Correct answers include non-color feedback', '.answer-choice.is-correct::after', [
+  /content:\s*["']✓["']/,
+]);
+
+expectRule('Wrong answers include non-color feedback', '.answer-choice.is-wrong::after', [
+  /content:\s*["']×["']/,
+]);
+
 expectRule('Top and footer zones are bounded', '.exercise-topbar,\n.exercise-footer', [
   /min-height:\s*clamp\(/,
   /display:\s*flex/,
 ]);
+
+expectCss('Exercise footer keeps safe-area clearance', /\.exercise-footer\s*\{[\s\S]*padding-bottom:\s*max\(0px,\s*var\(--safe-bottom\)\)/);
+
+expectCss('Compact-height exercise mode is defined', /@media \(max-height:\s*620px\)[\s\S]*\.exercise-screen/);
+expectCss('Tablet dashboard layouts are defined', /@media \(min-width:\s*760px\)[\s\S]*\.tablet-dashboard-grid/);
+expectCss('User reduced-motion preference disables decorative animation', /:root\[data-reduced-motion="true"\][\s\S]*animation:\s*none/);
 
 expectCss('Timed and untimed CSS hooks exist', /\.timed-main[\s\S]*\.untimed-main/);
 expectCss('Exercise answer hooks exist', /\.answer-choice[\s\S]*\.answer-choice:active/);
@@ -109,6 +123,7 @@ expectApp('Exercise routes apply the no-scroll root class', /speedmath-root \$\{
 expectApp('Timed screen uses exercise-screen and timed-screen classes', /className=['"]exercise-screen timed-screen['"]/);
 expectApp('Untimed screen uses exercise-screen and untimed-screen classes', /className=['"]exercise-screen untimed-screen['"]/);
 expectApp('Timed and untimed answers are inside exercise layout', /className=['"]answers-grid['"][\s\S]*session\.currentProblem\.choices\.map[\s\S]*className=\{`answer-choice/);
+expectApp('Answer buttons have semantic labels', /aria-label=\{`Answer \$\{choice\}`\}/);
 expectApp('Bottom navigation is omitted on exercise routes', /routeUsesBottomNav[\s\S]*HOME[\s\S]*SETTINGS[\s\S]*routeIsExercise\(route\)/);
 
 if (failed) {

@@ -430,8 +430,8 @@ const HomeScreen: React.FC<{
   const dailyChallenge = save.challenges.find((challenge) => challenge.type === 'daily_spark') ?? save.challenges[0];
 
   return (
-    <div className="screen-stack">
-      <section className="home-hero">
+    <div className="screen-stack tablet-dashboard-grid home-dashboard">
+      <section className="home-hero tablet-span-2">
         <div className="min-w-0">
           <div className="text-xs font-black uppercase text-cyan-200">Ready for a spark?</div>
           <h2 className="mt-1 text-3xl font-black leading-tight text-white">Level {save.level}</h2>
@@ -440,14 +440,14 @@ const HomeScreen: React.FC<{
         <ProgressRing percent={levelProgress.percent} label="XP" value={`${levelProgress.xpIntoLevel}/${levelProgress.xpNeeded}`} tone="gold" />
       </section>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="stat-grid stat-grid-three">
         <StatTile label="Streak" value={save.currentStreak} icon={Flame} tone="stat-orange" />
         <StatTile label="Accuracy" value={`${accuracy}%`} icon={Target} tone="stat-green" />
         <StatTile label="Solved" value={totalCorrect} icon={Zap} tone="stat-blue" />
       </div>
 
       {dailyChallenge && (
-        <GlassCard tone="violet" className="p-4">
+        <GlassCard tone="violet" className="daily-goal-card p-4">
           <div className="flex items-center gap-3">
             <div className="badge-spark"><Trophy className="h-6 w-6" /></div>
             <div className="min-w-0 flex-1">
@@ -469,7 +469,7 @@ const HomeScreen: React.FC<{
         </PremiumButton>
       </div>
 
-      <GlassCard tone="blue" className="p-4">
+      <GlassCard tone="blue" className="coach-pick-card p-4">
         <div className="flex items-center gap-3">
           <img src={pibotMascot} alt="Coach bot" className="h-16 w-16 rounded-2xl object-cover" />
           <div className="min-w-0 flex-1">
@@ -669,6 +669,7 @@ const TimedPracticeScreen: React.FC<{
                 type="button"
                 disabled={Boolean(activeFeedback)}
                 className={`answer-choice ${stateClass}`}
+                aria-label={`Answer ${choice}`}
                 onClick={() => onAnswer(choice)}
               >
                 {choice}
@@ -729,6 +730,7 @@ const UntimedPracticeScreen: React.FC<{
                 type="button"
                 disabled={Boolean(activeFeedback)}
                 className={`answer-choice ${stateClass}`}
+                aria-label={`Answer ${choice}`}
                 onClick={() => onAnswer(choice)}
               >
                 {choice}
@@ -754,6 +756,9 @@ const ProblemPanel: React.FC<{ session: SessionState; feedback: FeedbackState }>
     </div>
     <div className="problem-prompt">{session.currentProblem.prompt}</div>
     <div className="problem-equals">= ?</div>
+    <div className={`feedback-callout ${feedback ? 'is-visible' : ''}`} aria-live="polite">
+      {feedback ? (feedback.isCorrect ? 'Correct' : `Answer ${feedback.correctAnswer}`) : '\u00a0'}
+    </div>
   </div>
 );
 
@@ -779,7 +784,7 @@ const ResultsScreen: React.FC<{
             <ProgressRing percent={summary.accuracy} label="Score" value={summary.score} tone="gold" className="results-ring" />
             <div className="min-w-0">
               <div className="section-kicker">Session Complete</div>
-              <h2 className="screen-heading">+{summary.xpEarned} XP</h2>
+              <h2 className="screen-heading xp-reveal">+{summary.xpEarned} XP</h2>
               <div className="mt-2 flex gap-1" aria-label={`${stars} star rating`}>
                 {[0, 1, 2].map((star) => (
                   <Star key={star} className={`h-6 w-6 ${star < stars ? 'fill-yellow-300 text-yellow-300' : 'text-white/20'}`} />
@@ -864,7 +869,11 @@ const ProgressScreen: React.FC<{ save: SpeedMathSaveData; setRoute: (route: Rout
         </PremiumButton>
       </div>
 
-      <GlassCard className="p-4">
+      <GlassCard className="chart-card p-4">
+        <div className="chart-legend" aria-hidden="true">
+          <span className="legend-score">Score</span>
+          <span className="legend-accuracy">Accuracy</span>
+        </div>
         <div className="h-56">
           {chartData.length === 0 ? (
             <EmptyState icon={BarChart3} title="No sessions yet" text="Complete a drill to light up the chart." />
@@ -889,7 +898,7 @@ const ProgressScreen: React.FC<{ save: SpeedMathSaveData; setRoute: (route: Rout
         </div>
       </GlassCard>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="stat-grid stat-grid-two">
         <StatTile label="Level XP" value={`${levelProgress.percent}%`} icon={Zap} tone="stat-blue" />
         <StatTile label="Trend" value={`${trend >= 0 ? '+' : ''}${trend}%`} icon={Activity} tone={trend >= 0 ? 'stat-green' : 'stat-orange'} />
       </div>
@@ -931,12 +940,12 @@ const TopicSummary: React.FC<{ title: string; topic: Operation; mastery: number;
 );
 
 const ChallengesScreen: React.FC<{ save: SpeedMathSaveData; onStart: (mode: PracticeMode, operation?: Operation) => void }> = ({ save, onStart }) => (
-  <div className="screen-stack">
+  <div className="screen-stack tablet-dashboard-grid">
     <div>
       <div className="section-kicker">Challenges</div>
       <h2 className="screen-heading">Earn extra sparks</h2>
     </div>
-    <div className="grid gap-3">
+    <div className="challenge-list">
       {save.challenges.map((challenge) => (
         <ChallengeCard key={challenge.id} challenge={challenge} onStart={onStart} />
       ))}
@@ -965,12 +974,13 @@ const ChallengeCard: React.FC<{ challenge: ChallengeState; onStart: (mode: Pract
           <p className="text-xs text-blue-100">{challenge.description}</p>
           <ProgressBar value={challenge.progress} max={challenge.target} tone={completed ? 'gold' : 'violet'} />
         </div>
-        <div className="text-right">
+        <div className="challenge-action">
           <div className="font-mono text-sm font-black text-yellow-200">+{challenge.rewardXp}</div>
           <button
             type="button"
-            className="mt-2 rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase text-white"
+            className="challenge-go"
             onClick={() => onStart(challenge.type === 'focus_builder' ? PracticeMode.UNTIMED : PracticeMode.CHALLENGE, challenge.operation)}
+            aria-label={`Start ${challenge.title}`}
           >
             Go
           </button>
@@ -1008,7 +1018,7 @@ const AchievementsScreen: React.FC<{ save: SpeedMathSaveData }> = ({ save }) => 
 const CoachScreen: React.FC<{ save: SpeedMathSaveData; onStart: (mode: PracticeMode, operation?: Operation) => void }> = ({ save, onStart }) => {
   const coach = getCoachRecommendation(save);
   return (
-    <div className="screen-stack">
+    <div className="screen-stack tablet-dashboard-grid">
       <GlassCard tone="blue" className="coach-panel">
         <div className="coach-bot-wrap">
           <img src={pibotMascot} alt="SpeedMath Coach bot" className="coach-bot" />
@@ -1020,7 +1030,7 @@ const CoachScreen: React.FC<{ save: SpeedMathSaveData; onStart: (mode: PracticeM
           <p className="mt-2 text-sm text-blue-100">{coach.reason}</p>
         </div>
       </GlassCard>
-      <div className="grid gap-3">
+      <div className="coach-grid">
         <CoachRow label="Mode" value={coach.recommendedMode} icon={Timer} />
         <CoachRow label="Topic" value={operationLabels[coach.recommendedOperation]} icon={Target} />
         <CoachRow label="Next Goal" value={coach.nextGoal} icon={Sparkles} />
@@ -1052,8 +1062,8 @@ const ProfileScreen: React.FC<{ save: SpeedMathSaveData; setRoute: (route: Route
   const topBadges = save.achievements.filter((achievement) => achievement.unlockedAt).slice(0, 3);
 
   return (
-    <div className="screen-stack">
-      <GlassCard tone="gold" className="profile-card">
+    <div className="screen-stack tablet-dashboard-grid">
+      <GlassCard tone="gold" className="profile-card tablet-span-2">
         <div className="profile-avatar">SM</div>
         <div className="min-w-0 flex-1">
           <div className="section-kicker">Player Profile</div>
@@ -1061,7 +1071,7 @@ const ProfileScreen: React.FC<{ save: SpeedMathSaveData; setRoute: (route: Route
           <ProgressBar value={levelProgress.xpIntoLevel} max={levelProgress.xpNeeded} tone="gold" />
         </div>
       </GlassCard>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="stat-grid stat-grid-two">
         <StatTile label="Solved" value={totalCorrect} icon={Zap} tone="stat-blue" />
         <StatTile label="Accuracy" value={`${accuracy}%`} icon={Target} tone="stat-green" />
         <StatTile label="Streak" value={save.currentStreak} icon={Flame} tone="stat-orange" />

@@ -82,3 +82,33 @@
 - [ ] Manual iPad pass is still required.
 - [ ] No-scroll timed and untimed exercise checks on real devices are still required.
 - [ ] Visual screenshot review is still required before store upload.
+
+## Phase 2D Visual Device Polish QA
+
+- [ ] Small Android phone visual check around 360px width.
+- [ ] Large Android phone visual check around 430-480px width.
+- [ ] Android tablet visual check around 768-1024px width.
+- [ ] iPhone visual check with safe areas.
+- [ ] iPad visual check with safe areas.
+- [ ] Timed practice no-scroll visual check.
+- [ ] Untimed practice no-scroll visual check.
+- [ ] Challenge card readability check for active and completed states.
+- [ ] Badge locked/unlocked visual check, including hidden badge copy.
+- [ ] Results reward reveal check for XP, badges, and challenge completion.
+- [ ] Coach recommendation visual check using real local coach output.
+- [ ] Reduced motion check with Settings > Reduced Motion enabled.
+- [ ] Large text check with Settings > Larger Text enabled.
+- [ ] Safe-area check for top controls, bottom nav, and exercise footer.
+- [ ] Final screenshot review before store upload.
+
+## Phase 2E Mobile Build Readiness QA
+
+- [ ] `npm run verify:release-readiness` passes.
+- [ ] `npx cap sync android` completes and generated output is reviewed.
+- [ ] `npx cap sync ios` completes or iOS sync limitation is documented.
+- [ ] Android debug APK builds with `android/gradlew.bat assembleDebug`.
+- [ ] Android debug APK path is documented for QA install.
+- [ ] Existing GitHub Actions Android release workflow is reviewed before production AAB use.
+- [ ] Existing GitHub Actions iOS TestFlight workflow is reviewed before iOS QA.
+- [ ] Device QA packet is used for Android phone, Android tablet, iPhone, and iPad passes.
+- [ ] Store upload remains blocked until real-device QA and final screenshot review complete.

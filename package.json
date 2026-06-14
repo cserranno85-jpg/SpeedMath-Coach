@@ -19,6 +19,7 @@
     "verify:layout": "node scripts/verify-layout-rules.mjs",
     "verify:persistence": "node scripts/verify-persistence-regression.mjs",
     "verify:session-flow": "node scripts/verify-session-flow.mjs",
+    "verify:release-readiness": "node scripts/verify-release-readiness.mjs",
     "verify:release": "node scripts/verify-release.mjs",
     "generate:icons": "npx @capacitor/assets generate",
     "lint": "tsc --noEmit",
