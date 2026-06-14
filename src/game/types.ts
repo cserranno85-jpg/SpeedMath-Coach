@@ -130,6 +130,10 @@ export interface UserProgress {
 
 export interface UserPreferences {
   soundEnabled: boolean;
+  hapticsEnabled: boolean;
+  musicEnabled: boolean;
+  reducedMotion: boolean;
+  largerText: boolean;
   theme: 'light' | 'dark';
   adaptiveDifficulty: boolean;
   defaultMode: PracticeMode;

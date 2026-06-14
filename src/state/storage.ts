@@ -97,6 +97,10 @@ const normalizePreferences = (
 
   return {
     soundEnabled: typeof source.soundEnabled === 'boolean' ? source.soundEnabled : legacyMuted !== 'true',
+    hapticsEnabled: typeof source.hapticsEnabled === 'boolean' ? source.hapticsEnabled : true,
+    musicEnabled: typeof source.musicEnabled === 'boolean' ? source.musicEnabled : false,
+    reducedMotion: typeof source.reducedMotion === 'boolean' ? source.reducedMotion : false,
+    largerText: typeof source.largerText === 'boolean' ? source.largerText : false,
     theme: source.theme === 'light' || source.theme === 'dark'
       ? source.theme
       : legacyTheme === 'light' || legacyTheme === 'dark'

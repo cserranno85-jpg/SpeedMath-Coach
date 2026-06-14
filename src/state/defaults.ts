@@ -15,6 +15,10 @@ export const SAVE_STORAGE_KEY = 'speedMathSaveDataV2';
 
 export const defaultPreferences: UserPreferences = {
   soundEnabled: true,
+  hapticsEnabled: true,
+  musicEnabled: false,
+  reducedMotion: false,
+  largerText: false,
   theme: 'dark',
   adaptiveDifficulty: true,
   defaultMode: PracticeMode.TIMED,
