@@ -20,7 +20,13 @@
 
 - [ ] `npm run lint` passes.
 - [ ] `npm run verify:game-brain` passes.
+- [ ] `npm run verify:ui-integration` passes.
+- [ ] `npm run verify:layout` passes.
+- [ ] `npm run verify:persistence` passes.
+- [ ] `npm run verify:session-flow` passes.
 - [ ] `npm run verify:mobile` passes.
+- [ ] `npm run build` passes.
+- [ ] `npm run verify:release` passes.
 
 ## Phase 2B UI Readiness Notes
 
@@ -62,3 +68,17 @@
 - [ ] iPad layout respects safe areas and keeps exercise controls visible.
 - [ ] No backend, auth, ads, analytics, tracking, paid service, or unnecessary permission was introduced.
 - [ ] Native Android/iOS identity files remain unchanged.
+
+## Phase 2C Regression QA
+
+- [ ] `npm run verify:ui-integration` passes and confirms the visible UI still imports/uses the local game brain, persistence helpers, adaptive engine, coach engine, challenge engine, achievement engine, and typed session flow.
+- [ ] `npm run verify:layout` passes and confirms timed/untimed exercise routes keep the no-scroll dynamic viewport layout protections.
+- [ ] `npm run verify:persistence` passes and confirms missing/corrupt/legacy storage, onboarding, preferences, XP/level, achievements, challenges, session history, reset behavior, and schema version handling.
+- [ ] `npm run verify:session-flow` passes and confirms timed and untimed local sessions progress through generated problems, correct/incorrect answers, summary creation, progress, challenge updates, achievement checks, coach recommendations, save, and reload.
+- [ ] `npm run verify:release` passes before release upload.
+- [ ] Manual real-device Android phone pass is still required.
+- [ ] Manual real-device Android tablet pass is still required.
+- [ ] Manual iPhone pass is still required.
+- [ ] Manual iPad pass is still required.
+- [ ] No-scroll timed and untimed exercise checks on real devices are still required.
+- [ ] Visual screenshot review is still required before store upload.

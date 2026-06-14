@@ -155,12 +155,61 @@ const migrateLegacySession = (session: Record<string, unknown>, index: number): 
   };
 };
 
+const normalizeSessionSummary = (session: Record<string, unknown>, index: number): SessionSummary => {
+  const looksTyped = typeof session.id === 'string' &&
+    typeof session.startedAt === 'string' &&
+    typeof session.endedAt === 'string' &&
+    typeof session.totalProblems === 'number';
+
+  if (!looksTyped) return migrateLegacySession(session, index);
+
+  const id = session.id as string;
+  const startedAt = session.startedAt as string;
+  const endedAt = session.endedAt as string;
+  const totalProblems = Math.max(0, Math.floor(session.totalProblems as number));
+  const correctCount = Math.max(0, Math.floor(typeof session.correctCount === 'number' ? session.correctCount : 0));
+  const incorrectCount = Math.max(0, Math.floor(typeof session.incorrectCount === 'number' ? session.incorrectCount : totalProblems - correctCount));
+  const operationMix = Array.isArray(session.operationMix)
+    ? session.operationMix.map(normalizeOperation).filter(Boolean) as Operation[]
+    : defaultPreferences.defaultOperations;
+  const badgesUnlocked = Array.isArray(session.badgesUnlocked)
+    ? session.badgesUnlocked.filter((item): item is string => typeof item === 'string')
+    : [];
+  const challengesCompleted = Array.isArray(session.challengesCompleted)
+    ? session.challengesCompleted.filter((item): item is string => typeof item === 'string')
+    : [];
+
+  return {
+    id,
+    mode: normalizeMode(session.mode),
+    startedAt: toIsoTimestamp(startedAt),
+    endedAt: toIsoTimestamp(endedAt),
+    operationMix: operationMix.length > 0 ? operationMix : defaultPreferences.defaultOperations,
+    difficultyStart: normalizeDifficulty(session.difficultyStart),
+    difficultyEnd: normalizeDifficulty(session.difficultyEnd),
+    totalProblems,
+    correctCount,
+    incorrectCount,
+    accuracy: typeof session.accuracy === 'number'
+      ? Math.max(0, Math.min(100, Math.round(session.accuracy)))
+      : totalProblems > 0
+        ? Math.round((correctCount / totalProblems) * 100)
+        : 0,
+    averageResponseTimeMs: typeof session.averageResponseTimeMs === 'number' ? Math.max(0, Math.round(session.averageResponseTimeMs)) : 0,
+    bestStreak: typeof session.bestStreak === 'number' ? Math.max(0, Math.floor(session.bestStreak)) : 0,
+    xpEarned: typeof session.xpEarned === 'number' ? Math.max(0, Math.floor(session.xpEarned)) : 0,
+    score: typeof session.score === 'number' ? Math.max(0, Math.floor(session.score)) : 0,
+    badgesUnlocked,
+    challengesCompleted,
+  };
+};
+
 const normalizeSaveData = (value: unknown, now = new Date().toISOString()): SpeedMathSaveData => {
   const defaults = createDefaultSaveData(now);
   if (!isObject(value)) return defaults;
 
   const sessionHistory = Array.isArray(value.sessionHistory)
-    ? value.sessionHistory.filter(isObject).map((session, index) => migrateLegacySession(session, index))
+    ? value.sessionHistory.filter(isObject).map(normalizeSessionSummary)
     : defaults.sessionHistory;
   const totalXp = typeof value.totalXp === 'number'
     ? Math.max(0, value.totalXp)

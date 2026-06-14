@@ -15,6 +15,11 @@
     "doctor": "npx cap doctor",
     "verify:mobile": "node scripts/verify-mobile-readiness.mjs",
     "verify:game-brain": "node scripts/verify-game-brain.mjs",
+    "verify:ui-integration": "node scripts/verify-ui-integration.mjs",
+    "verify:layout": "node scripts/verify-layout-rules.mjs",
+    "verify:persistence": "node scripts/verify-persistence-regression.mjs",
+    "verify:session-flow": "node scripts/verify-session-flow.mjs",
+    "verify:release": "node scripts/verify-release.mjs",
     "generate:icons": "npx @capacitor/assets generate",
     "lint": "tsc --noEmit",
     "generate:brand-assets": "node scripts/generate-speedmath-assets.mjs"
