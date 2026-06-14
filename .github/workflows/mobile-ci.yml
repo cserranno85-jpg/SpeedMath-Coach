@@ -133,7 +133,9 @@ jobs:
           }
 
           console.log('All checked PNG files have valid PNG signatures.');
-          NODE      - name: Normalize generated PWA manifest icons back to PNG
+          NODE
+
+      - name: Normalize generated PWA manifest icons back to PNG
         shell: bash
         run: |
           node <<'NODE'
