@@ -89,14 +89,13 @@ export default function App() {
 
   return (
     <div
-      className={`min-h-[100dvh] w-full relative bg-slate-950 text-slate-900 font-sans tracking-tight flex items-center justify-center selection:bg-cyan-200 overflow-x-hidden pb-safe pr-safe pl-safe pt-safe ${
-        isExerciseScreen ? 'overflow-hidden p-0' : 'overflow-y-auto p-3 md:p-8'
+      className={`min-h-[100dvh] w-full relative bg-slate-950 text-slate-900 font-sans tracking-tight flex justify-center selection:bg-cyan-200 overflow-x-hidden pb-safe pr-safe pl-safe pt-safe ${
+        isExerciseScreen ? 'items-center overflow-hidden p-0' : 'items-start overflow-y-auto p-0'
       }`}
       style={{
         backgroundImage: `linear-gradient(180deg, rgba(4, 8, 28, 0.18), rgba(4, 8, 28, 0.72)), url(${screenBackground})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
       }}
     >
        <div className="absolute inset-0 bg-[radial-gradient(#22d3ee_1px,transparent_1px)] [background-size:28px_28px] opacity-[0.08] pointer-events-none"></div>
@@ -107,7 +106,7 @@ export default function App() {
          className="absolute inset-0 h-full w-full object-cover opacity-[0.14] mix-blend-screen pointer-events-none"
        />
        
-       <div className="relative z-10 w-full flex items-center justify-center">
+       <div className="relative z-10 w-full flex items-start justify-center">
           <AnimatePresence mode="wait">
              {appState === 'MENU' && (
                  <motion.div
@@ -173,7 +172,7 @@ export default function App() {
                    transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                    className="w-full flex justify-center"
                  >
-                    <Stats onBack={() => setAppState('MENU')} />
+                    <Stats onBack={() => setAppState('MENU')} onStartGame={handleStartGame} />
                  </motion.div>
              )}
           </AnimatePresence>

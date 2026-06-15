@@ -6,6 +6,7 @@ import { sounds } from '../utils/soundEngine';
 import {
   badgeArtByAchievementId,
   badges as badgeAssets,
+  brandMarks,
   buttonGlows,
   fx,
   mascots,
@@ -65,13 +66,24 @@ export const GameOver: React.FC<GameOverProps> = ({ score, totalQuestions, histo
        id="gameover_screen_root"
        initial={{ opacity: 0, y: 20 }}
        animate={{ opacity: 1, y: 0 }}
-       className="w-full max-w-xl mx-auto bg-slate-950/92 rounded-2xl border border-cyan-300/60 shadow-[0_20px_60px_rgba(8,47,73,0.42)] p-6 md:p-8 text-white overflow-hidden relative"
+       className="relative mx-auto w-full max-w-xl overflow-hidden rounded-[1.85rem] border border-cyan-300/45 bg-slate-950/88 p-5 text-white shadow-[0_20px_60px_rgba(8,47,73,0.42),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl md:p-8"
        style={modalPanelStyle(panels.modalGlow)}
     >
        <img src={fx.mathParticles} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-10 mix-blend-screen pointer-events-none" />
        <div className="relative z-10">
+       <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+             <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-cyan-200/35 bg-cyan-300/10 shadow-[0_0_22px_rgba(34,211,238,0.2)]">
+                <img src={brandMarks.primaryLogo} alt="SpeedMath Coach logo" className="h-10 w-10 object-contain drop-shadow-[0_0_12px_rgba(251,191,36,0.3)]" />
+             </div>
+             <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">SpeedMath</p>
+                <p className="text-lg font-black leading-tight text-white">Session Report</p>
+             </div>
+          </div>
+       </div>
        {/* High Polish Mascot Presenter Header */}
-       <div className="flex flex-col sm:flex-row items-center gap-5 p-5 bg-slate-950/70 rounded-2xl border border-cyan-300/35 text-white mb-6 relative overflow-hidden">
+       <div className="relative mb-6 flex flex-col items-center gap-5 overflow-hidden rounded-[1.5rem] border border-cyan-300/28 bg-slate-950/62 p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:flex-row">
           <img src={fx.goldSparkBurst} alt="" aria-hidden="true" className="absolute -top-12 -right-12 w-36 h-36 opacity-25 mix-blend-screen pointer-events-none" />
           
           {/* Animated 3D Mascot Avatar Frame */}
@@ -100,12 +112,12 @@ export const GameOver: React.FC<GameOverProps> = ({ score, totalQuestions, histo
             <p className="text-xs text-cyan-100/55 font-medium tracking-tight mt-1">Here is your speed math performance.</p>
        </div>
 
-       <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-slate-950/70 p-6 rounded-xl border border-cyan-300/35 flex flex-col items-center justify-center" style={modalPanelStyle(panels.statsCard, 'rgba(10, 28, 52, 0.74)')}>
+       <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="bg-slate-950/70 p-5 rounded-[1.35rem] border border-cyan-300/35 flex flex-col items-center justify-center shadow-[0_0_22px_rgba(34,211,238,0.12)]" style={modalPanelStyle(panels.statsCard, 'rgba(10, 28, 52, 0.74)')}>
               <span className="text-[10px] font-bold text-cyan-100/55 uppercase tracking-widest mb-1">Score</span>
               <span className="text-4xl font-mono font-bold text-cyan-200 tracking-tighter">{score}</span>
           </div>
-          <div className="bg-slate-950/70 p-6 rounded-xl border border-amber-300/35 flex flex-col items-center justify-center" style={modalPanelStyle(panels.statsCard, 'rgba(34, 28, 39, 0.74)')}>
+          <div className="bg-slate-950/70 p-5 rounded-[1.35rem] border border-amber-300/35 flex flex-col items-center justify-center shadow-[0_0_22px_rgba(251,191,36,0.12)]" style={modalPanelStyle(panels.statsCard, 'rgba(34, 28, 39, 0.74)')}>
               <span className="text-[10px] font-bold text-amber-100/60 uppercase tracking-widest mb-1">Accuracy</span>
               <span className="text-4xl font-mono font-bold text-amber-200 tracking-tighter">{accuracy}%</span>
           </div>
@@ -138,15 +150,15 @@ export const GameOver: React.FC<GameOverProps> = ({ score, totalQuestions, histo
                 <Clock className="w-4 h-4 text-cyan-300" /> Speed Intervals
             </h3>
             <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-slate-950/65 border border-cyan-100/15 text-cyan-50 rounded-lg">
+                <div className="flex items-center justify-between rounded-2xl border border-cyan-100/15 bg-slate-950/65 p-3 text-cyan-50">
                     <div className="flex items-center gap-2 text-xs font-bold">Under 3 seconds</div>
                     <div className="font-mono font-bold text-cyan-300 text-sm">{under3s} <span className="text-[10px] text-cyan-100/45">ans</span></div>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-slate-950/65 border border-cyan-100/15 text-cyan-50 rounded-lg">
+                <div className="flex items-center justify-between rounded-2xl border border-cyan-100/15 bg-slate-950/65 p-3 text-cyan-50">
                     <div className="flex items-center gap-2 text-xs font-bold">3 - 5 seconds</div>
                     <div className="font-mono font-bold text-cyan-300 text-sm">{under5s} <span className="text-[10px] text-cyan-100/45">ans</span></div>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-slate-950/65 border border-cyan-100/15 text-cyan-50 rounded-lg">
+                <div className="flex items-center justify-between rounded-2xl border border-cyan-100/15 bg-slate-950/65 p-3 text-cyan-50">
                     <div className="flex items-center gap-2 text-xs font-bold">Over 5 seconds</div>
                     <div className="font-mono font-bold text-cyan-300 text-sm">{over5s} <span className="text-[10px] text-cyan-100/45">ans</span></div>
                 </div>

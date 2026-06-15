@@ -334,7 +334,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
        
        {/* Highly Visually Prominent Top Dashboard Layout */}
        <div
-         className="absolute top-3 left-3 right-3 md:left-[5%] md:right-[5%] max-w-3xl mx-auto flex items-center justify-between gap-2.5 bg-slate-950/88 border border-cyan-200/40 rounded-[1.65rem] px-3 py-2 md:px-4 md:py-2.5 shadow-[0_14px_34px_rgba(8,47,73,0.36)] z-20 text-white backdrop-blur"
+         className="absolute left-3 right-3 top-3 z-20 mx-auto flex max-w-[430px] items-center justify-between gap-2 rounded-[1.45rem] border border-cyan-200/35 bg-slate-950/86 px-2.5 py-2 text-white shadow-[0_14px_34px_rgba(8,47,73,0.36),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl md:left-[5%] md:right-[5%] md:max-w-3xl md:px-4 md:py-2.5"
          style={assetPanelStyle(panels.navbarGlow, 'rgba(10, 17, 38, 0.82)')}
        >
           
@@ -343,11 +343,11 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
              <img
                src={brandMarks.primaryLogo}
                alt="SpeedMath Coach logo"
-               className="h-10 w-10 md:h-12 md:w-12 rounded-xl object-contain shadow-[0_0_18px_rgba(251,191,36,0.24)] ring-1 ring-amber-100/35 shrink-0"
+               className="h-9 w-9 shrink-0 rounded-xl object-contain shadow-[0_0_18px_rgba(251,191,36,0.24)] ring-1 ring-amber-100/35 md:h-12 md:w-12"
              />
-             <div className="flex flex-col rounded-2xl border border-cyan-100/15 bg-cyan-300/8 px-3 py-2">
+             <div className="flex flex-col rounded-2xl border border-cyan-100/15 bg-cyan-300/8 px-2.5 py-1.5 md:px-3 md:py-2">
                 <span className="text-[8px] uppercase tracking-widest text-cyan-100/52 font-extrabold leading-none mb-1">Score</span>
-                <span className="text-xl md:text-2xl font-mono font-black text-cyan-50 leading-none">{score}</span>
+                <span className="font-mono text-lg font-black leading-none text-cyan-50 md:text-2xl">{score}</span>
              </div>
              {streak > 0 && (
                 <div className="flex items-center gap-1 bg-amber-300/14 border border-amber-200/35 text-amber-100 px-2 py-1.5 rounded-xl text-xs font-black shrink-0" title={`${streak} consecutive correct answers`}>
@@ -361,18 +361,18 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
           {settings.gameMode === GameMode.TIMED && (
              <div className="flex items-center justify-center shrink-0">
                 {freezeTimeRemaining > 0 ? (
-                   <div className="animate-pulse flex items-center gap-1.5 bg-cyan-300/18 border border-cyan-300/60 px-3 py-1.5 md:px-4 md:py-2 rounded-2xl shadow-[0_0_18px_rgba(6,182,212,0.32)] text-cyan-50">
+                   <div className="flex animate-pulse items-center gap-1.5 rounded-2xl border border-cyan-300/60 bg-cyan-300/18 px-2.5 py-1.5 text-cyan-50 shadow-[0_0_18px_rgba(6,182,212,0.32)] md:px-4 md:py-2">
                       <img src={fx.cyanOrbGlow} alt="" aria-hidden="true" className="w-5 h-5 object-contain animate-spin" />
-                      <span className="font-mono text-sm md:text-base font-black tracking-widest uppercase">FROZEN {freezeTimeRemaining}s</span>
+                      <span className="font-mono text-xs font-black uppercase tracking-widest md:text-base">FROZEN {freezeTimeRemaining}s</span>
                    </div>
                 ) : (
-                   <div className={`transition-all duration-300 flex items-center gap-2 md:gap-3 px-3 py-1.5 md:px-5 md:py-2 rounded-2xl border ${
+                   <div className={`flex items-center gap-1.5 rounded-2xl border px-2.5 py-1.5 transition-all duration-300 md:gap-3 md:px-5 md:py-2 ${
                       timeLeft <= 10 
                         ? 'bg-rose-500/18 border-rose-300 shadow-[0_0_25px_rgba(244,63,94,0.42)] text-rose-100 animate-pulse'
                         : 'bg-slate-950/82 border-amber-200/24 text-amber-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
                    }`}>
-                      <img src={currentModeIcon} alt="" aria-hidden="true" className={`w-5 h-5 md:w-7 md:h-7 object-contain ${timeLeft <= 10 ? 'animate-bounce' : ''}`} />
-                      <span className={`font-mono text-xl md:text-3xl font-black tracking-widest ${timeLeft <= 10 ? 'text-rose-100' : 'text-slate-100'}`}>
+                      <img src={currentModeIcon} alt="" aria-hidden="true" className={`h-5 w-5 object-contain md:h-7 md:w-7 ${timeLeft <= 10 ? 'animate-bounce' : ''}`} />
+                      <span className={`font-mono text-lg font-black tracking-widest md:text-3xl ${timeLeft <= 10 ? 'text-rose-100' : 'text-slate-100'}`}>
                          {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
                       </span>
                    </div>
@@ -381,9 +381,12 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
           )}
 
           {/* Right Block: Home Button */}
+          <div className="hidden items-center gap-1 rounded-xl border border-amber-200/25 bg-amber-300/10 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-amber-100 min-[390px]:flex">
+             L1
+          </div>
           <button 
              onClick={() => { sounds.playClick(); onHome(); }}
-             className="flex items-center gap-1.5 px-3 py-2 bg-cyan-300 hover:bg-cyan-200 text-slate-950 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 border border-cyan-100 shadow-[0_0_16px_rgba(34,211,238,0.28)] shrink-0 cursor-pointer"
+             className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-cyan-100 bg-cyan-300 px-2.5 py-2 text-[10px] font-black uppercase tracking-widest text-slate-950 shadow-[0_0_16px_rgba(34,211,238,0.28)] transition-all hover:bg-cyan-200 active:scale-95 md:px-3"
           >
              <Home className="w-3.5 h-3.5" />
              <span className="hidden sm:inline font-bold">Home</span>

@@ -1,22 +1,39 @@
 import React, { useEffect, useState } from 'react';
-import { Settings as SettingsType, Difficulty, Operation, GameMode } from '../types';
 import {
-  Settings as SettingsIcon, Play, BarChart2, Flame, Trophy, Sparkles,
-  Volume2, VolumeX, Crown, Target, Check, Award, Zap
+  Check,
+  Flame,
+  Gauge,
+  Gem,
+  Play,
+  Sparkles,
+  Target,
+  Zap,
 } from 'lucide-react';
+import { Settings as SettingsType, Difficulty, Operation, GameMode } from '../types';
 import { calculateStreak, evaluateAchievements, Badge } from '../utils/streakAndAchievements';
 import { sounds } from '../utils/soundEngine';
 import {
   badgeArtByAchievementId,
   badges as badgeAssets,
   brandMarks,
-  buttonGlows,
   challengeIcons,
   fx,
   mascots,
   operationIcons,
   panels,
 } from '../assets/uiAssetRegistry';
+import {
+  CardEnergy,
+  PremiumBottomNav,
+  PremiumCTA,
+  PremiumGlassClass,
+  PremiumNavKey,
+  PremiumScreen,
+  PremiumTopBar,
+  SparkleBadge,
+  labelClass,
+  premiumPanelStyle,
+} from './PremiumShell';
 
 interface MenuProps {
   settings: SettingsType;
@@ -25,25 +42,13 @@ interface MenuProps {
   onViewStats: () => void;
 }
 
-const cardAssetStyle = (asset: string, overlay = 'rgba(10, 16, 42, 0.78)'): React.CSSProperties => ({
-  backgroundImage: `linear-gradient(135deg, ${overlay}, rgba(3, 7, 22, 0.92)), url(${asset})`,
-  backgroundPosition: 'center',
-  backgroundSize: 'cover',
-});
-
 const modeIconByMode: Record<GameMode, string> = {
   [GameMode.TIMED]: challengeIcons.timed,
   [GameMode.UNTIMED]: challengeIcons.untimed,
 };
 
-const shellCard =
-  'relative overflow-hidden rounded-[1.75rem] border border-cyan-200/35 bg-slate-950/86 text-white shadow-[0_18px_48px_rgba(8,47,73,0.34)] backdrop-blur';
-
-const sectionLabel =
-  'text-[10px] font-black uppercase tracking-widest text-cyan-100/58';
-
-const brandIconClassName =
-  'h-14 w-14 rounded-2xl object-contain shadow-[0_0_22px_rgba(251,191,36,0.28)] ring-1 ring-amber-100/45';
+const settingPanelClass =
+  'relative overflow-hidden rounded-[1.35rem] border border-cyan-100/16 bg-slate-950/48 p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]';
 
 export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartGame, onViewStats }) => {
   const [streak, setStreak] = useState(0);
@@ -81,7 +86,7 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
         let totalS = 0;
         parsed.forEach((session: any) => {
           totalC += session.score || 0;
-          totalS += (session.totalSubmissions || session.totalQuestions || 0);
+          totalS += session.totalSubmissions || session.totalQuestions || 0;
         });
         setTotalSolves(totalC);
         setAccuracy(totalS > 0 ? Math.round((totalC / totalS) * 100) : 0);
@@ -97,439 +102,419 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
       ...settings,
       operations: {
         ...settings.operations,
-        [op]: !settings.operations[op]
-      }
+        [op]: !settings.operations[op],
+      },
     });
   };
 
-  const getPibotMessage = () => {
-    if (totalSolves === 0) {
-      return "Welcome trainee. I am Pi-bot, your calculation assistant. Start with a clean beginner drill to prime your mental math engine.";
-    }
-    if (streak >= 3) {
-      return `Strong momentum: ${streak} training days in a row. Your dashboard is ready for another record attempt.`;
-    }
-    if (streak > 0) {
-      return `Training streak active at ${streak} days. Keep the cadence steady and push today's drill.`;
-    }
-    if (accuracy > 90 && totalSolves > 20) {
-      return `Precision is calibrated at ${accuracy}%. Increase the challenge when you want a harder session.`;
-    }
-    return "Calibrate the rules or start a focused drill. The fastest path is a short timed session with one clean operation.";
-  };
+  const unlockedBadgesCount = badges.filter((badge) => badge.unlocked).length;
+  const featuredBadge = badges.find((badge) => badge.unlocked) ?? badges[0];
+  const levelProgress = Math.min(100, totalSolves % 100 || (totalSolves > 0 ? 100 : 0));
+  const selectedOperations = Object.values(Operation).filter((op) => settings.operations[op]);
 
-  const unlockedBadgesCount = badges.filter(b => b.unlocked).length;
-  const featuredBadges = [
-    ...badges.filter(badge => badge.unlocked),
-    ...badges.filter(badge => !badge.unlocked),
-  ].slice(0, 4);
+  const navActive: PremiumNavKey = activeTab === 'SETTINGS' ? 'challenges' : 'home';
+  const handleNavSelect = (key: PremiumNavKey) => {
+    sounds.playClick();
+    if (key === 'home') {
+      setActiveTab('DASHBOARD');
+    } else if (key === 'practice') {
+      onStartGame();
+    } else if (key === 'progress' || key === 'profile') {
+      onViewStats();
+    } else if (key === 'challenges') {
+      setActiveTab('SETTINGS');
+    }
+  };
 
   const statCards = [
     {
+      label: 'Solved',
+      value: `${totalSolves}`,
+      detail: totalSessions > 0 ? `${totalSessions} drills` : 'First drill ready',
+      icon: Zap,
+      theme: 'border-blue-300/55 bg-blue-500/12 text-blue-100 shadow-[0_0_26px_rgba(59,130,246,0.22)]',
+      bubble: 'border-blue-200/45 bg-blue-400/18 text-blue-100 shadow-[0_0_22px_rgba(59,130,246,0.36)]',
+    },
+    {
+      label: 'Accuracy',
+      value: `${accuracy}%`,
+      detail: accuracy > 0 ? 'Overall precision' : 'No attempts yet',
+      icon: Target,
+      theme: 'border-emerald-300/55 bg-emerald-400/12 text-emerald-100 shadow-[0_0_26px_rgba(16,185,129,0.2)]',
+      bubble: 'border-emerald-200/45 bg-emerald-400/18 text-emerald-100 shadow-[0_0_22px_rgba(16,185,129,0.34)]',
+    },
+    {
       label: 'Streak',
       value: `${streak}`,
-      unit: streak === 1 ? 'day' : 'days',
-      detail: totalSessions > 0 ? `${totalSessions} sessions logged` : 'Start a first drill',
+      detail: streak === 1 ? 'day active' : 'days active',
       icon: Flame,
-      iconClassName: 'border-amber-200/25 bg-amber-300/12 text-amber-200',
-      className: 'border-amber-300/45 shadow-[0_12px_30px_rgba(251,191,36,0.13)]',
+      theme: 'border-amber-300/60 bg-amber-400/12 text-amber-100 shadow-[0_0_26px_rgba(251,191,36,0.22)]',
+      bubble: 'border-amber-200/50 bg-amber-400/18 text-amber-100 shadow-[0_0_22px_rgba(251,191,36,0.36)]',
     },
     {
       label: 'Best',
       value: `${highScore}`,
-      unit: 'pts',
-      detail: 'Personal score record',
-      icon: Crown,
-      iconClassName: 'border-yellow-200/25 bg-yellow-300/12 text-yellow-200',
-      className: 'border-yellow-300/45 shadow-[0_12px_30px_rgba(250,204,21,0.12)]',
-    },
-    {
-      label: 'Solved',
-      value: `${totalSolves}`,
-      unit: 'total',
-      detail: 'Correct answers banked',
-      icon: Award,
-      iconClassName: 'border-cyan-200/25 bg-cyan-300/12 text-cyan-200',
-      className: 'border-cyan-300/45 shadow-[0_12px_30px_rgba(34,211,238,0.12)]',
-    },
-    {
-      label: 'Precision',
-      value: `${accuracy}`,
-      unit: '%',
-      detail: accuracy > 0 ? 'Overall accuracy' : 'No attempts yet',
-      icon: Target,
-      iconClassName: 'border-violet-200/25 bg-violet-300/12 text-violet-200',
-      className: 'border-violet-300/45 shadow-[0_12px_30px_rgba(167,139,250,0.12)]',
+      detail: 'High score',
+      icon: Gem,
+      theme: 'border-fuchsia-300/55 bg-fuchsia-400/12 text-fuchsia-100 shadow-[0_0_26px_rgba(217,70,239,0.2)]',
+      bubble: 'border-fuchsia-200/45 bg-fuchsia-400/18 text-fuchsia-100 shadow-[0_0_22px_rgba(217,70,239,0.34)]',
     },
   ];
 
   return (
-    <div id="menu_layout_root" className="w-full max-w-[460px] mx-auto flex flex-col gap-4 selection:bg-cyan-200 pb-2">
-      <div
-        className={`${shellCard} p-3.5`}
-        style={cardAssetStyle(panels.navbarGlow, 'rgba(9, 16, 38, 0.82)')}
-      >
-        <img src={fx.mathParticles} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-10 mix-blend-screen pointer-events-none" />
-          <div className="relative z-10 flex items-center gap-3">
-          <img
-            src={brandMarks.primaryLogo}
-            alt="SpeedMath Coach logo"
-            className={brandIconClassName}
-          />
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-lime-300 leading-none">SpeedMath</p>
-            <h1 className="text-lg font-black text-white leading-tight tracking-tight truncate">SpeedMath Coach</h1>
-          </div>
-          <div className="hidden min-[390px]:flex items-center rounded-full border border-cyan-100/20 bg-cyan-300/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-cyan-50">
-            {settings.difficulty}
-          </div>
-          <button
-            onClick={() => { sounds.playClick(); onViewStats(); }}
-            className="h-10 w-10 rounded-2xl border border-cyan-100/25 bg-slate-950/55 text-cyan-100 hover:text-white active:scale-95 transition flex items-center justify-center cursor-pointer"
-            title="View performance stats"
-          >
-            <BarChart2 className="w-4 h-4" />
-          </button>
-          <button
-            id="btn_toggle_mute"
-            onClick={handleToggleMute}
-            className={`h-10 w-10 rounded-2xl border transition-all duration-150 flex items-center justify-center active:scale-95 cursor-pointer shrink-0 ${
-              muted
-                ? 'border-rose-300/40 bg-rose-950/70 text-rose-200'
-                : 'border-amber-200/70 bg-amber-300 text-amber-950 shadow-[0_0_18px_rgba(251,191,36,0.24)]'
-            }`}
-            title={muted ? 'Unmute Volume' : 'Mute Volume'}
-          >
-            {muted ? <VolumeX className="w-[18px] h-[18px] stroke-[2.5]" /> : <Volume2 className="w-[18px] h-[18px] stroke-[2.5]" />}
-          </button>
-        </div>
-      </div>
+    <>
+      <PremiumScreen>
+        <PremiumTopBar
+          logoSrc={brandMarks.primaryLogo}
+          muted={muted}
+          onPrimaryAction={handleToggleMute}
+          onSecondaryAction={() => {
+            sounds.playClick();
+            setActiveTab('SETTINGS');
+          }}
+          primaryTitle={muted ? 'Unmute audio' : 'Mute audio'}
+          secondaryTitle="Level 1 setup"
+        />
 
-      {activeTab === 'DASHBOARD' && (
-        <div id="dashboard_tab_content" className="flex flex-col gap-4">
-          <div
-            id="pibot_mascot_header"
-            className={`${shellCard} min-h-[216px] p-5`}
-            style={cardAssetStyle(panels.cosmicCard, 'rgba(8, 16, 42, 0.78)')}
-          >
-            <img src={fx.cyanOrbGlow} alt="" aria-hidden="true" className="absolute -right-24 -top-24 h-64 w-64 opacity-28 mix-blend-screen pointer-events-none" />
-            <img src={fx.goldSparkBurst} alt="" aria-hidden="true" className="absolute -left-14 bottom-[-72px] h-44 w-44 opacity-20 mix-blend-screen pointer-events-none" />
-            <div className="relative z-10 max-w-[68%] pr-2">
-              <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-cyan-100/20 bg-cyan-300/10 px-3 py-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span className={sectionLabel}>Pi-bot online</span>
-              </div>
-              <h2 className="text-2xl font-black leading-[1.04] tracking-tight text-white">Ready for a focused speed run?</h2>
-              <p className="mt-3 text-xs font-semibold leading-relaxed text-cyan-50/76">
-                {getPibotMessage()}
-              </p>
-              <button
-                id="btn_start_session_dashboard"
-                onClick={() => { sounds.playClick(); onStartGame(); }}
-                className="mt-4 inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-100/70 px-4 py-3 text-xs font-black uppercase tracking-widest text-amber-950 shadow-[0_0_28px_rgba(251,191,36,0.25)] transition hover:brightness-110 active:scale-95 cursor-pointer"
-                style={{
-                  backgroundImage: `linear-gradient(180deg, rgba(251, 191, 36, 0.9), rgba(245, 158, 11, 0.95)), url(${buttonGlows.primary})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
-              >
-                <Play className="w-4 h-4 fill-current" />
-                Start Drill
-              </button>
-            </div>
-            <div className="absolute bottom-[-8px] right-[-10px] h-48 w-40 min-[390px]:h-56 min-[390px]:w-48 flex items-end justify-center pointer-events-none select-none">
+        {activeTab === 'DASHBOARD' ? (
+          <section id="dashboard_tab_content" className="mt-4 flex flex-col gap-4">
+            <div
+              id="profile_level_card"
+              className={`${PremiumGlassClass} min-h-[250px] border-blue-300/40 p-4 shadow-[0_18px_52px_rgba(29,78,216,0.24),0_0_34px_rgba(251,191,36,0.1),inset_0_1px_0_rgba(255,255,255,0.1)]`}
+              style={premiumPanelStyle(panels.cosmicCard, 'rgba(7, 13, 34, 0.76)')}
+            >
+              <CardEnergy className="-left-24 bottom-[-70px]" />
               <img
-                src={mascots.waving}
-                alt="Pi-bot coach"
-                className="h-full w-auto object-contain animate-float-pibot drop-shadow-[0_22px_30px_rgba(34,211,238,0.34)]"
+                src={fx.goldSparkBurst}
+                alt=""
+                aria-hidden="true"
+                className="pointer-events-none absolute -right-20 -top-16 h-56 w-56 opacity-28 mix-blend-screen"
               />
-            </div>
-          </div>
+              <div className="relative z-10 grid min-h-[218px] grid-cols-[42%_1fr] items-center gap-3">
+                <div className="relative flex h-full items-end justify-center">
+                  <div className="absolute bottom-3 h-20 w-36 rounded-full border border-amber-300/30 bg-amber-300/10 blur-[1px] shadow-[0_0_34px_rgba(251,191,36,0.34)]" />
+                  <img
+                    src={mascots.headAvatar}
+                    alt="Pi-bot avatar"
+                    className="relative z-10 h-[150px] w-full object-contain drop-shadow-[0_22px_30px_rgba(34,211,238,0.34)]"
+                  />
+                </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            {statCards.map(({ label, value, unit, detail, icon: Icon, iconClassName, className }) => (
-              <div
-                key={label}
-                className={`${shellCard} ${className} min-h-[116px] p-4`}
-                style={cardAssetStyle(panels.statsCard, 'rgba(9, 17, 38, 0.82)')}
-              >
-                <div className="relative z-10 flex h-full flex-col justify-between">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={sectionLabel}>{label}</span>
-                    <div className={`rounded-xl border p-2 ${iconClassName}`}>
-                      <Icon className="w-4 h-4" />
+                <div className="min-w-0 py-2">
+                  <p className={`${labelClass} text-cyan-300`}>Player profile</p>
+                  <h2 className="mt-2 text-[46px] font-black leading-none tracking-tight text-white">Level 1</h2>
+                  <div className="mt-5 flex items-center gap-3">
+                    <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-800/90 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-500 shadow-[0_0_18px_rgba(251,191,36,0.5)]"
+                        style={{ width: `${levelProgress}%` }}
+                      />
                     </div>
+                    <span className="font-mono text-sm font-black text-cyan-50">{levelProgress}/100</span>
                   </div>
-                  <div>
-                    <div className="flex items-end gap-1.5">
-                      <span className="font-mono text-3xl font-black leading-none text-white">{value}</span>
-                      <span className="pb-0.5 text-[10px] font-black uppercase tracking-widest text-cyan-100/52">{unit}</span>
+                  <div className="mt-5 rounded-[1.15rem] border border-cyan-100/14 bg-slate-950/38 p-2.5">
+                    <p className={`${labelClass} mb-2 text-cyan-100/45`}>Choose avatar</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="grid h-16 place-items-center rounded-2xl border border-cyan-200/70 bg-cyan-300/16 shadow-[0_0_20px_rgba(34,211,238,0.28)]">
+                        <img src={mascots.headAvatar} alt="" aria-hidden="true" className="h-12 w-12 object-contain" />
+                      </div>
+                      <div className="grid h-16 place-items-center rounded-2xl border border-amber-200/40 bg-amber-300/14">
+                        <img src={brandMarks.primaryLogo} alt="" aria-hidden="true" className="h-12 w-12 object-contain" />
+                      </div>
+                      <div className="grid h-16 place-items-center rounded-2xl border border-blue-200/35 bg-blue-400/12 text-blue-100">
+                        <Zap className="h-9 w-9 stroke-[2.5]" />
+                      </div>
                     </div>
-                    <p className="mt-2 text-[10px] font-semibold leading-tight text-cyan-50/58">{detail}</p>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-
-          <div
-            className={`${shellCard} p-4`}
-            style={cardAssetStyle(panels.cosmicCard, 'rgba(8, 15, 36, 0.84)')}
-          >
-            <div className="relative z-10 mb-3 flex items-center justify-between gap-3">
-              <div>
-                <p className={sectionLabel}>Featured badges</p>
-                <h3 className="text-base font-black text-white tracking-tight">Achievements</h3>
-              </div>
-              <button
-                onClick={() => { sounds.playClick(); onViewStats(); }}
-                className="rounded-full border border-cyan-100/20 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-cyan-100 hover:text-white cursor-pointer"
-              >
-                {unlockedBadgesCount} / {badges.length}
-              </button>
             </div>
-            <div className="relative z-10 grid grid-cols-4 gap-2.5">
-              {featuredBadges.map((badge) => (
+
+            <div className="grid grid-cols-2 gap-3">
+              {statCards.map(({ label, value, detail, icon: Icon, theme, bubble }) => (
                 <div
-                  key={badge.id}
-                  className={`rounded-2xl border p-2 text-center ${
-                    badge.unlocked
-                      ? 'border-amber-300/55 bg-amber-200/10 text-amber-100 shadow-[0_0_16px_rgba(251,191,36,0.12)]'
-                      : 'border-slate-600/60 bg-slate-950/45 text-cyan-100/40'
-                  }`}
-                  title={badge.description}
+                  key={label}
+                  className={`${PremiumGlassClass} min-h-[142px] p-4 ${theme}`}
+                  style={premiumPanelStyle(panels.statsCard, 'rgba(8, 17, 41, 0.72)')}
                 >
-                  <img
-                    src={badge.unlocked ? (badgeArtByAchievementId[badge.id] ?? badgeAssets.firstSolve) : badgeAssets.locked}
-                    alt=""
-                    aria-hidden="true"
-                    className={`mx-auto h-10 w-10 object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.35)] ${badge.unlocked ? '' : 'grayscale opacity-70'}`}
-                  />
-                  <span className="mt-1 block truncate text-[9px] font-black leading-tight">{badge.title}</span>
+                  <div className="absolute -right-8 -bottom-8 h-24 w-24 rounded-full bg-current opacity-[0.08] blur-xl" />
+                  <div className="relative z-10 flex h-full flex-col justify-between">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className={`grid h-14 w-14 place-items-center rounded-full border ${bubble}`}>
+                        <Icon className="h-8 w-8 stroke-[2.2]" />
+                      </div>
+                      <p className={`${labelClass} text-current/80`}>{label}</p>
+                    </div>
+                    <div>
+                      <div className="font-mono text-[42px] font-black leading-none text-white">{value}</div>
+                      <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-cyan-50/48">{detail}</p>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
 
-          <div className={`${shellCard} p-4`} style={cardAssetStyle(panels.cosmicCard, 'rgba(9, 16, 36, 0.84)')}>
-            <div className="relative z-10 flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-widest text-cyan-50/70">
-              <span className="mr-auto text-cyan-100/52">Current setup</span>
-              <span className="rounded-full border border-amber-200/25 bg-amber-300/12 px-2.5 py-1 text-amber-100">{settings.gameMode}</span>
-              <span className="rounded-full border border-violet-200/25 bg-violet-300/12 px-2.5 py-1 text-violet-100">{settings.difficulty}</span>
-              <button
-                onClick={() => { sounds.playClick(); setActiveTab('SETTINGS'); }}
-                className="rounded-full border border-cyan-200/30 bg-cyan-300/12 px-2.5 py-1 text-cyan-100 hover:text-white cursor-pointer"
-              >
-                Edit
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'SETTINGS' && (
-        <div
-          id="session_setup_card"
-          className={`${shellCard} p-5 space-y-5`}
-          style={cardAssetStyle(panels.cosmicCard, 'rgba(8, 15, 36, 0.86)')}
-        >
-          <img src={fx.mathParticles} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-10 mix-blend-screen pointer-events-none" />
-          <div className="relative z-10 flex items-start justify-between gap-4 border-b border-cyan-100/12 pb-4">
-            <div className="flex min-w-0 items-center gap-3">
-              <img
-                src={brandMarks.primaryLogo}
-                alt="SpeedMath Coach logo"
-                className="h-12 w-12 rounded-2xl object-contain shadow-[0_0_18px_rgba(251,191,36,0.22)] ring-1 ring-amber-100/35"
-              />
-              <div className="min-w-0">
-                <p className={sectionLabel}>Rules & setup</p>
-                <h3 className="text-xl font-black text-white tracking-tight truncate">Session Calibration</h3>
-              </div>
-            </div>
-            <div className="rounded-2xl border border-cyan-100/20 bg-cyan-300/10 p-2.5 text-cyan-200">
-              <SettingsIcon className="w-5 h-5" />
-            </div>
-          </div>
-
-          <div className="relative z-10 space-y-5">
-            <section className="rounded-[1.35rem] border border-cyan-100/15 bg-slate-950/45 p-3.5">
-              <h4 className={`${sectionLabel} mb-3 flex items-center gap-2`}>
-                <img src={modeIconByMode[settings.gameMode]} alt="" aria-hidden="true" className="w-5 h-5 object-contain" />
-                Training format
-              </h4>
-              <div className="grid grid-cols-2 gap-2.5">
+            <div
+              className={`${PremiumGlassClass} p-4`}
+              style={premiumPanelStyle(panels.cosmicCard, 'rgba(6, 13, 34, 0.8)')}
+            >
+              <CardEnergy className="-right-24 -top-24" />
+              <div className="relative z-10 mb-4 flex items-center justify-between">
+                <h3 className={`${labelClass} text-cyan-300`}>Top badges</h3>
                 <button
-                  id="btn_mode_timed"
-                  onClick={() => { sounds.playClick(); onSettingsChange({ ...settings, gameMode: GameMode.TIMED }); }}
-                  className={`rounded-2xl border px-3 py-3 text-xs font-black transition flex items-center justify-center gap-2 ${
-                    settings.gameMode === GameMode.TIMED
-                      ? 'bg-cyan-300 text-slate-950 border-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.32)]'
-                      : 'bg-slate-950/55 border-cyan-100/15 text-cyan-100/64 hover:border-cyan-200/40'
-                  }`}
+                  type="button"
+                  onClick={() => {
+                    sounds.playClick();
+                    onViewStats();
+                  }}
+                  className="text-xs font-bold text-cyan-200"
                 >
-                  <img src={challengeIcons.timed} alt="" aria-hidden="true" className="w-6 h-6 object-contain" />
-                  Timed
-                </button>
-                <button
-                  id="btn_mode_untimed"
-                  onClick={() => { sounds.playClick(); onSettingsChange({ ...settings, gameMode: GameMode.UNTIMED }); }}
-                  className={`rounded-2xl border px-3 py-3 text-xs font-black transition flex items-center justify-center gap-2 ${
-                    settings.gameMode === GameMode.UNTIMED
-                      ? 'bg-cyan-300 text-slate-950 border-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.32)]'
-                      : 'bg-slate-950/55 border-cyan-100/15 text-cyan-100/64 hover:border-cyan-200/40'
-                  }`}
-                >
-                  <img src={challengeIcons.untimed} alt="" aria-hidden="true" className="w-6 h-6 object-contain" />
-                  Practice
+                  View all ›
                 </button>
               </div>
-            </section>
-
-            <section className="rounded-[1.35rem] border border-cyan-100/15 bg-slate-950/45 p-3.5">
-              <h4 className={`${sectionLabel} mb-3 flex items-center gap-2`}>
-                <Sparkles className="w-4 h-4 text-cyan-300" />
-                Active operations
-              </h4>
-              <div className="grid grid-cols-2 gap-2.5">
-                {Object.values(Operation).map((op) => (
-                  <label key={op} className={`flex items-center gap-2.5 rounded-2xl border px-3 py-3 text-xs font-black transition select-none cursor-pointer ${
-                    settings.operations[op]
-                      ? 'bg-cyan-300/14 border-cyan-200/55 text-cyan-50 shadow-[0_0_16px_rgba(34,211,238,0.12)]'
-                      : 'bg-slate-950/55 border-cyan-100/15 text-cyan-100/55 hover:border-cyan-200/40'
-                  }`}>
-                    <input
-                      type="checkbox"
-                      className="h-[18px] w-[18px] rounded border-slate-300 accent-cyan-300 cursor-pointer"
-                      checked={settings.operations[op]}
-                      onChange={() => toggleOperation(op)}
+              {featuredBadge && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    sounds.playClick();
+                    onViewStats();
+                  }}
+                  className="relative z-10 flex w-full items-center gap-4 rounded-[1.35rem] border border-cyan-200/22 bg-blue-950/34 p-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+                >
+                  <div className="relative grid h-20 w-20 shrink-0 place-items-center">
+                    <img
+                      src={featuredBadge.unlocked ? (badgeArtByAchievementId[featuredBadge.id] ?? badgeAssets.firstSolve) : badgeAssets.locked}
+                      alt=""
+                      aria-hidden="true"
+                      className={`h-16 w-16 object-contain drop-shadow-[0_10px_18px_rgba(34,211,238,0.24)] ${featuredBadge.unlocked ? '' : 'grayscale opacity-70'}`}
                     />
-                    <img src={operationIcons[op]} alt="" aria-hidden="true" className="w-7 h-7 object-contain" />
-                    <span className="capitalize truncate">{op.toLowerCase()}</span>
-                  </label>
-                ))}
-              </div>
-            </section>
+                    {featuredBadge.unlocked && (
+                      <img src={badgeAssets.unlockBurst} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-contain opacity-35 mix-blend-screen" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-lg font-black leading-tight text-white">{featuredBadge.title}</div>
+                    <p className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-cyan-100/62">
+                      {featuredBadge.unlocked ? featuredBadge.description : `${unlockedBadgesCount} / ${badges.length} unlocked`}
+                    </p>
+                  </div>
+                </button>
+              )}
+            </div>
 
-            <section className="rounded-[1.35rem] border border-cyan-100/15 bg-slate-950/45 p-3.5">
-              <h4 className={`${sectionLabel} mb-3 flex items-center gap-2`}>
-                <Zap className="w-4 h-4 text-violet-300" />
-                Difficulty
-              </h4>
-              <div className="grid grid-cols-2 gap-2.5">
-                {Object.values(Difficulty).map((diff) => (
-                  <button
-                    key={diff}
-                    id={`btn_diff_${diff.toLowerCase()}`}
-                    onClick={() => { sounds.playClick(); onSettingsChange({ ...settings, difficulty: diff }); }}
-                    className={`rounded-xl border px-3 py-2.5 text-xs font-black transition ${
-                      settings.difficulty === diff
-                        ? 'bg-violet-300 border-violet-100 text-slate-950 shadow-[0_0_18px_rgba(167,139,250,0.28)]'
-                        : 'bg-slate-950/55 border-cyan-100/15 text-cyan-100/60 hover:border-cyan-200/40'
-                    }`}
-                  >
-                    {diff}
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            <label className="flex items-start justify-between gap-4 rounded-[1.35rem] border border-cyan-100/15 bg-slate-950/45 p-4 cursor-pointer select-none">
-              <div>
-                <div className="flex items-center gap-2 text-xs font-black text-cyan-50">
-                  <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
-                  Adaptive learning
+            <PremiumCTA
+              id="btn_start_session_dashboard"
+              icon={Play}
+              onClick={() => {
+                sounds.playClick();
+                onStartGame();
+              }}
+            >
+              Start SpeedMath Drill
+            </PremiumCTA>
+          </section>
+        ) : (
+          <section
+            id="session_setup_card"
+            className={`${PremiumGlassClass} mt-4 space-y-4 p-4`}
+            style={premiumPanelStyle(panels.cosmicCard, 'rgba(7, 13, 34, 0.84)')}
+          >
+            <CardEnergy className="-right-24 -top-24" />
+            <div className="relative z-10 flex items-center justify-between gap-3 border-b border-cyan-100/12 pb-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <img
+                  src={brandMarks.primaryLogo}
+                  alt="SpeedMath Coach logo"
+                  className="h-12 w-12 shrink-0 rounded-2xl object-contain shadow-[0_0_18px_rgba(251,191,36,0.22)] ring-1 ring-amber-100/35"
+                />
+                <div className="min-w-0">
+                  <p className={`${labelClass} text-cyan-300`}>Rules & setup</p>
+                  <h3 className="truncate text-xl font-black tracking-tight text-white">Session Calibration</h3>
                 </div>
-                <p className="mt-1 text-[10px] leading-normal text-cyan-100/55">Scale difficulty based on your live drill accuracy.</p>
               </div>
-              <input
-                type="checkbox"
-                className="mt-0.5 h-5 w-5 rounded border-slate-300 accent-cyan-300 cursor-pointer"
-                checked={settings.adaptiveDifficulty}
-                onChange={(e) => { sounds.playClick(); onSettingsChange({ ...settings, adaptiveDifficulty: e.target.checked }); }}
-              />
-            </label>
+              <SparkleBadge>{settings.difficulty}</SparkleBadge>
+            </div>
 
-            {settings.gameMode === GameMode.TIMED && (
-              <section className="rounded-[1.35rem] border border-cyan-100/15 bg-slate-950/45 p-3.5">
-                <h4 className={`${sectionLabel} mb-3 flex items-center gap-2`}>
-                  <img src={challengeIcons.timed} alt="" aria-hidden="true" className="w-5 h-5 object-contain" />
-                  Duration
+            <div className="relative z-10 space-y-4">
+              <section className={settingPanelClass}>
+                <h4 className={`${labelClass} mb-3 flex items-center gap-2 text-cyan-100/60`}>
+                  <img src={modeIconByMode[settings.gameMode]} alt="" aria-hidden="true" className="h-5 w-5 object-contain" />
+                  Training format
                 </h4>
-                <div className="grid grid-cols-4 gap-2">
-                  {[30, 60, 120, 300].map((time) => (
+                <div className="grid grid-cols-2 gap-2.5">
+                  {[
+                    { mode: GameMode.TIMED, label: 'Timed', icon: challengeIcons.timed },
+                    { mode: GameMode.UNTIMED, label: 'Practice', icon: challengeIcons.untimed },
+                  ].map(({ mode, label, icon }) => (
                     <button
-                      key={time}
-                      id={`btn_duration_${time}`}
-                      onClick={() => { sounds.playClick(); onSettingsChange({ ...settings, gameDurationSeconds: time }); }}
-                      className={`rounded-xl border px-2 py-2.5 text-xs font-black transition ${
-                        settings.gameDurationSeconds === time
-                          ? 'bg-cyan-300 border-cyan-100 text-slate-950 shadow-[0_0_16px_rgba(34,211,238,0.28)]'
-                          : 'bg-slate-950/55 border-cyan-100/15 text-cyan-100/60 hover:border-cyan-200/40'
+                      key={mode}
+                      id={mode === GameMode.TIMED ? 'btn_mode_timed' : 'btn_mode_untimed'}
+                      type="button"
+                      onClick={() => {
+                        sounds.playClick();
+                        onSettingsChange({ ...settings, gameMode: mode });
+                      }}
+                      className={`flex min-h-[58px] items-center justify-center gap-2 rounded-2xl border px-3 text-xs font-black transition active:scale-95 ${
+                        settings.gameMode === mode
+                          ? 'border-cyan-100 bg-cyan-300 text-slate-950 shadow-[0_0_22px_rgba(34,211,238,0.34)]'
+                          : 'border-cyan-100/15 bg-slate-950/52 text-cyan-100/62'
                       }`}
                     >
-                      {time < 60 ? `${time}s` : `${time / 60}m`}
+                      <img src={icon} alt="" aria-hidden="true" className="h-7 w-7 object-contain" />
+                      {label}
                     </button>
                   ))}
                 </div>
               </section>
-            )}
 
-            <div className="grid grid-cols-1 min-[390px]:grid-cols-2 gap-3 pt-1">
-              <button
-                id="btn_save_back"
-                onClick={() => { sounds.playClick(); setActiveTab('DASHBOARD'); }}
-                className="rounded-2xl border border-cyan-100 bg-cyan-300 px-4 py-4 text-xs font-black uppercase tracking-widest text-slate-950 shadow-[0_0_22px_rgba(34,211,238,0.24)] active:scale-95 cursor-pointer flex items-center justify-center gap-2"
-              >
-                <Check className="w-4 h-4 stroke-[2.5]" />
-                Apply
-              </button>
-              <button
-                id="btn_play_direct"
-                onClick={() => { sounds.playClick(); onStartGame(); }}
-                className="rounded-2xl border border-amber-100 px-4 py-4 text-xs font-black uppercase tracking-widest text-amber-950 shadow-[0_0_22px_rgba(251,191,36,0.24)] active:scale-95 cursor-pointer flex items-center justify-center gap-2"
-                style={{
-                  backgroundImage: `linear-gradient(180deg, rgba(251, 191, 36, 0.9), rgba(245, 158, 11, 0.95)), url(${buttonGlows.primary})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
-              >
-                <Play className="w-[18px] h-[18px] fill-current" />
-                Play
-              </button>
+              <section className={settingPanelClass}>
+                <h4 className={`${labelClass} mb-3 flex items-center gap-2 text-cyan-100/60`}>
+                  <Sparkles className="h-4 w-4 text-cyan-300" />
+                  Active operations
+                </h4>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {Object.values(Operation).map((op) => (
+                    <label
+                      key={op}
+                      className={`flex min-h-[58px] cursor-pointer select-none items-center gap-2.5 rounded-2xl border px-3 text-xs font-black transition ${
+                        settings.operations[op]
+                          ? 'border-cyan-200/55 bg-cyan-300/14 text-cyan-50 shadow-[0_0_16px_rgba(34,211,238,0.12)]'
+                          : 'border-cyan-100/15 bg-slate-950/52 text-cyan-100/55'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="h-[18px] w-[18px] cursor-pointer rounded border-slate-300 accent-cyan-300"
+                        checked={settings.operations[op]}
+                        onChange={() => toggleOperation(op)}
+                      />
+                      <img src={operationIcons[op]} alt="" aria-hidden="true" className="h-7 w-7 object-contain" />
+                      <span className="truncate capitalize">{op.toLowerCase()}</span>
+                    </label>
+                  ))}
+                </div>
+              </section>
+
+              <section className={settingPanelClass}>
+                <h4 className={`${labelClass} mb-3 flex items-center gap-2 text-cyan-100/60`}>
+                  <Gauge className="h-4 w-4 text-violet-300" />
+                  Difficulty
+                </h4>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {Object.values(Difficulty).map((diff) => (
+                    <button
+                      key={diff}
+                      id={`btn_diff_${diff.toLowerCase()}`}
+                      type="button"
+                      onClick={() => {
+                        sounds.playClick();
+                        onSettingsChange({ ...settings, difficulty: diff });
+                      }}
+                      className={`rounded-xl border px-3 py-2.5 text-xs font-black transition active:scale-95 ${
+                        settings.difficulty === diff
+                          ? 'border-violet-100 bg-violet-300 text-slate-950 shadow-[0_0_18px_rgba(167,139,250,0.28)]'
+                          : 'border-cyan-100/15 bg-slate-950/52 text-cyan-100/60'
+                      }`}
+                    >
+                      {diff}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <label className="flex cursor-pointer select-none items-start justify-between gap-4 rounded-[1.35rem] border border-cyan-100/15 bg-slate-950/48 p-4">
+                <div>
+                  <div className="flex items-center gap-2 text-xs font-black text-cyan-50">
+                    <Sparkles className="h-3.5 w-3.5 text-cyan-300" />
+                    Adaptive learning
+                  </div>
+                  <p className="mt-1 text-[10px] leading-normal text-cyan-100/55">Scale difficulty based on live drill accuracy.</p>
+                </div>
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-5 w-5 cursor-pointer rounded border-slate-300 accent-cyan-300"
+                  checked={settings.adaptiveDifficulty}
+                  onChange={(e) => {
+                    sounds.playClick();
+                    onSettingsChange({ ...settings, adaptiveDifficulty: e.target.checked });
+                  }}
+                />
+              </label>
+
+              {settings.gameMode === GameMode.TIMED && (
+                <section className={settingPanelClass}>
+                  <h4 className={`${labelClass} mb-3 flex items-center gap-2 text-cyan-100/60`}>
+                    <img src={challengeIcons.timed} alt="" aria-hidden="true" className="h-5 w-5 object-contain" />
+                    Duration
+                  </h4>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[30, 60, 120, 300].map((time) => (
+                      <button
+                        key={time}
+                        id={`btn_duration_${time}`}
+                        type="button"
+                        onClick={() => {
+                          sounds.playClick();
+                          onSettingsChange({ ...settings, gameDurationSeconds: time });
+                        }}
+                        className={`rounded-xl border px-2 py-2.5 text-xs font-black transition active:scale-95 ${
+                          settings.gameDurationSeconds === time
+                            ? 'border-cyan-100 bg-cyan-300 text-slate-950 shadow-[0_0_16px_rgba(34,211,238,0.28)]'
+                            : 'border-cyan-100/15 bg-slate-950/52 text-cyan-100/60'
+                        }`}
+                      >
+                        {time < 60 ? `${time}s` : `${time / 60}m`}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              <div className="rounded-[1.35rem] border border-cyan-100/15 bg-slate-950/42 p-3 text-[10px] font-black uppercase tracking-widest text-cyan-50/62">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span>Current setup</span>
+                  <span>{settings.gameMode}</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {selectedOperations.map((op) => (
+                    <span key={op} className="rounded-full border border-cyan-200/24 bg-cyan-300/10 px-2.5 py-1 text-cyan-100">
+                      {op.toLowerCase()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2">
+                <button
+                  id="btn_save_back"
+                  type="button"
+                  onClick={() => {
+                    sounds.playClick();
+                    setActiveTab('DASHBOARD');
+                  }}
+                  className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl border border-cyan-100 bg-cyan-300 px-4 text-xs font-black uppercase tracking-widest text-slate-950 shadow-[0_0_22px_rgba(34,211,238,0.24)] active:scale-95"
+                >
+                  <Check className="h-4 w-4 stroke-[2.5]" />
+                  Apply
+                </button>
+                <button
+                  id="btn_play_direct"
+                  type="button"
+                  onClick={() => {
+                    sounds.playClick();
+                    onStartGame();
+                  }}
+                  className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-300 px-4 text-xs font-black uppercase tracking-widest text-slate-950 shadow-[0_0_22px_rgba(251,191,36,0.24)] active:scale-95"
+                >
+                  <Play className="h-[18px] w-[18px] fill-current" />
+                  Play
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      <div
-        className="sticky bottom-3 z-20 mt-1 rounded-[1.65rem] border border-cyan-200/35 bg-slate-950/90 p-1.5 shadow-[0_16px_42px_rgba(2,6,23,0.5)] backdrop-blur"
-        style={cardAssetStyle(panels.navbarGlow, 'rgba(10, 16, 36, 0.78)')}
-      >
-        <div className="relative z-10 grid grid-cols-2 gap-1.5">
-          <button
-            onClick={() => { sounds.playClick(); setActiveTab('DASHBOARD'); }}
-            className={`rounded-2xl px-3 py-3 text-[11px] font-black uppercase tracking-widest transition flex items-center justify-center gap-2 cursor-pointer ${
-              activeTab === 'DASHBOARD'
-                ? 'bg-cyan-300 text-slate-950 shadow-[0_0_18px_rgba(34,211,238,0.34)]'
-                : 'text-cyan-100/62 hover:text-white'
-            }`}
-          >
-            <BarChart2 className="w-4 h-4" />
-            Dashboard
-          </button>
-          <button
-            onClick={() => { sounds.playClick(); setActiveTab('SETTINGS'); }}
-            className={`rounded-2xl px-3 py-3 text-[11px] font-black uppercase tracking-widest transition flex items-center justify-center gap-2 cursor-pointer ${
-              activeTab === 'SETTINGS'
-                ? 'bg-cyan-300 text-slate-950 shadow-[0_0_18px_rgba(34,211,238,0.34)]'
-                : 'text-cyan-100/62 hover:text-white'
-            }`}
-          >
-            <SettingsIcon className="w-4 h-4" />
-            Setup
-          </button>
-        </div>
-      </div>
-    </div>
+          </section>
+        )}
+      </PremiumScreen>
+      <PremiumBottomNav active={navActive} onSelect={handleNavSelect} />
+    </>
   );
 };
