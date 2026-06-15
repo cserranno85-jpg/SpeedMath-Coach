@@ -5,7 +5,7 @@ import { generateProblem, getOperationSymbol } from '../utils/mathGenerator';
 import { XCircle, Delete, Home } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { evaluateAchievements, Badge } from '../utils/streakAndAchievements';
-import { challengeIcons, fx, mascots, operationIcons, panels } from '../assets/uiAssetRegistry';
+import { brandMarks, challengeIcons, fx, mascots, operationIcons, panels } from '../assets/uiAssetRegistry';
 
 interface GameProps {
   settings: Settings;
@@ -334,19 +334,24 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
        
        {/* Highly Visually Prominent Top Dashboard Layout */}
        <div
-         className="absolute top-4 left-[2%] right-[2%] md:left-[5%] md:right-[5%] max-w-3xl mx-auto flex items-center justify-between gap-3 bg-slate-950/90 border border-cyan-300/60 rounded-[2rem] px-4 py-2.5 md:py-3.5 shadow-[0_14px_34px_rgba(8,47,73,0.38)] z-20 text-white backdrop-blur"
-         style={assetPanelStyle(panels.navbarGlow, 'rgba(15, 23, 42, 0.74)')}
+         className="absolute top-3 left-3 right-3 md:left-[5%] md:right-[5%] max-w-3xl mx-auto flex items-center justify-between gap-2.5 bg-slate-950/88 border border-cyan-200/40 rounded-[1.65rem] px-3 py-2 md:px-4 md:py-2.5 shadow-[0_14px_34px_rgba(8,47,73,0.36)] z-20 text-white backdrop-blur"
+         style={assetPanelStyle(panels.navbarGlow, 'rgba(10, 17, 38, 0.82)')}
        >
           
-          {/* Left Block: Score and Streak Badge */}
-          <div className="flex items-center gap-2">
-             <div className="flex flex-col">
-                <span className="text-[9px] uppercase tracking-widest text-cyan-100/55 font-extrabold leading-none mb-1">SCORE</span>
+          {/* Left Block: Brand Mark, Score and Streak Badge */}
+          <div className="flex items-center gap-2 min-w-0">
+             <img
+               src={brandMarks.primaryLogo}
+               alt="SpeedMath Coach logo"
+               className="h-10 w-10 md:h-12 md:w-12 rounded-xl object-contain shadow-[0_0_18px_rgba(251,191,36,0.24)] ring-1 ring-amber-100/35 shrink-0"
+             />
+             <div className="flex flex-col rounded-2xl border border-cyan-100/15 bg-cyan-300/8 px-3 py-2">
+                <span className="text-[8px] uppercase tracking-widest text-cyan-100/52 font-extrabold leading-none mb-1">Score</span>
                 <span className="text-xl md:text-2xl font-mono font-black text-cyan-50 leading-none">{score}</span>
              </div>
              {streak > 0 && (
-                <div className="flex items-center gap-0.5 bg-orange-50 border border-orange-100 text-orange-600 px-1.5 py-1 rounded-lg text-xs font-black animate-bounce shrink-0" title={`${streak} consecutive correct answers`}>
-                   <span>🔥</span>
+                <div className="flex items-center gap-1 bg-amber-300/14 border border-amber-200/35 text-amber-100 px-2 py-1.5 rounded-xl text-xs font-black shrink-0" title={`${streak} consecutive correct answers`}>
+                   <span className="h-1.5 w-1.5 rounded-full bg-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.8)]"></span>
                    <span className="font-mono">{streak}</span>
                 </div>
               )}
@@ -356,18 +361,18 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
           {settings.gameMode === GameMode.TIMED && (
              <div className="flex items-center justify-center shrink-0">
                 {freezeTimeRemaining > 0 ? (
-                   <div className="animate-pulse flex items-center gap-1.5 bg-cyan-100 border-2 border-cyan-400 px-3 py-1 md:px-4 md:py-1.5 rounded-2xl shadow-[0_0_15px_rgba(6,182,212,0.4)] text-cyan-700 transform scale-105">
+                   <div className="animate-pulse flex items-center gap-1.5 bg-cyan-300/18 border border-cyan-300/60 px-3 py-1.5 md:px-4 md:py-2 rounded-2xl shadow-[0_0_18px_rgba(6,182,212,0.32)] text-cyan-50">
                       <img src={fx.cyanOrbGlow} alt="" aria-hidden="true" className="w-5 h-5 object-contain animate-spin" />
                       <span className="font-mono text-sm md:text-base font-black tracking-widest uppercase">FROZEN {freezeTimeRemaining}s</span>
                    </div>
                 ) : (
-                   <div className={`transition-all duration-300 flex items-center gap-2 md:gap-3 px-4 py-1.5 md:px-6 md:py-2.5 rounded-2xl border ${
+                   <div className={`transition-all duration-300 flex items-center gap-2 md:gap-3 px-3 py-1.5 md:px-5 md:py-2 rounded-2xl border ${
                       timeLeft <= 10 
-                        ? 'bg-rose-50 border-rose-500 shadow-[0_0_25px_rgba(244,63,94,0.5)] scale-110 md:scale-125 text-rose-600 animate-pulse' 
-                        : 'bg-slate-900 border-slate-950 text-amber-400 shadow-md'
+                        ? 'bg-rose-500/18 border-rose-300 shadow-[0_0_25px_rgba(244,63,94,0.42)] text-rose-100 animate-pulse'
+                        : 'bg-slate-950/82 border-amber-200/24 text-amber-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
                    }`}>
                       <img src={currentModeIcon} alt="" aria-hidden="true" className={`w-5 h-5 md:w-7 md:h-7 object-contain ${timeLeft <= 10 ? 'animate-bounce' : ''}`} />
-                      <span className={`font-mono text-xl md:text-4xl font-black tracking-widest ${timeLeft <= 10 ? 'text-rose-600' : 'text-slate-100'}`}>
+                      <span className={`font-mono text-xl md:text-3xl font-black tracking-widest ${timeLeft <= 10 ? 'text-rose-100' : 'text-slate-100'}`}>
                          {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
                       </span>
                    </div>
@@ -378,7 +383,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
           {/* Right Block: Home Button */}
           <button 
              onClick={() => { sounds.playClick(); onHome(); }}
-             className="flex items-center gap-1.5 px-3 py-2 bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 border border-cyan-100 shadow-[0_0_16px_rgba(34,211,238,0.32)] shrink-0 cursor-pointer"
+             className="flex items-center gap-1.5 px-3 py-2 bg-cyan-300 hover:bg-cyan-200 text-slate-950 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 border border-cyan-100 shadow-[0_0_16px_rgba(34,211,238,0.28)] shrink-0 cursor-pointer"
           >
              <Home className="w-3.5 h-3.5" />
              <span className="hidden sm:inline font-bold">Home</span>
@@ -386,8 +391,8 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
        </div>
 
        {/* Main Page Layout */}
-       <div className="w-full flex-1 flex flex-col items-center justify-center mt-20 md:mt-24 pb-2">
-           <div className="flex items-center gap-2 text-[10px] font-bold text-cyan-100/70 uppercase tracking-widest mb-2 md:mb-4">
+       <div className="w-full flex-1 flex flex-col items-center justify-center mt-[4.5rem] md:mt-[5.5rem] pb-2">
+           <div className="flex items-center gap-2 rounded-full border border-cyan-100/18 bg-slate-950/55 px-3 py-1.5 text-[10px] font-black text-cyan-100/74 uppercase tracking-widest mb-2 md:mb-3">
               <img src={currentOperationIcon} alt="" aria-hidden="true" className="w-7 h-7 object-contain drop-shadow-[0_0_10px_rgba(34,211,238,0.3)]" />
               <span>Level {currentDifficulty}</span>
            </div>
@@ -400,24 +405,24 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
                animate={{ opacity: 1, scale: 1, y: 0 }}
                exit={{ opacity: 0, scale: 1.1, y: -20 }}
                transition={{ duration: 0.15 }}
-               className="flex flex-col items-center justify-center mb-3 md:mb-8 relative w-full max-w-3xl rounded-[2rem] border border-cyan-300/45 shadow-[0_18px_50px_rgba(8,47,73,0.42)] px-3 py-3 md:px-8 md:py-8 overflow-hidden"
-               style={assetPanelStyle(panels.exerciseCard, 'rgba(6, 12, 32, 0.82)')}
+               className="flex flex-col items-center justify-center mb-3 md:mb-5 relative w-full max-w-3xl rounded-[1.75rem] border border-cyan-200/40 shadow-[0_18px_50px_rgba(8,47,73,0.38)] px-3 py-3 md:px-8 md:py-6 overflow-hidden backdrop-blur"
+               style={assetPanelStyle(panels.exerciseCard, 'rgba(6, 12, 32, 0.86)')}
              >
                 <img src={fx.mathParticles} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-15 mix-blend-screen pointer-events-none" />
-                <div className="text-5xl sm:text-7xl md:text-[128px] font-black text-white tracking-tighter flex items-center gap-2 sm:gap-4 md:gap-8 z-10 my-2 md:my-4 leading-none font-sans drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
+                <div className="text-5xl sm:text-7xl md:text-[116px] font-black text-white tracking-tight flex items-center gap-2 sm:gap-4 md:gap-7 z-10 my-1 md:my-3 leading-none font-sans drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
                    <span>{currentProblem.num1}</span>
                    <span className="text-cyan-300 font-light">{getOperationSymbol(currentProblem.operation)}</span>
                    <span>{currentProblem.num2}</span>
                    <span className="text-amber-300 font-thin italic">=</span>
                    
                    {/* Typed Answer Field */}
-                   <span className={`w-24 sm:w-32 md:w-56 h-16 sm:h-24 md:h-40 border-b-4 ml-2 flex items-center justify-center transition-colors duration-100 ${
+                   <span className={`w-24 sm:w-32 md:w-52 h-16 sm:h-24 md:h-36 border-b-4 ml-2 flex items-center justify-center transition-colors duration-100 ${
                        feedback === 'correct' ? 'border-emerald-500 text-emerald-500' : 
                        feedback === 'incorrect' ? 'border-rose-500 text-rose-500' : 
                        inputValue ? 'border-cyan-200 text-cyan-50' : 'border-cyan-100/35 text-cyan-100/35'
                    }`}>
                       {inputValue ? (
-                          <span className="text-5xl sm:text-7xl md:text-[140px] font-black">{inputValue}</span>
+                          <span className="text-5xl sm:text-7xl md:text-[128px] font-black">{inputValue}</span>
                       ) : (
                           <span className="opacity-0">?</span> 
                       )}
@@ -427,17 +432,17 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
            </AnimatePresence>
 
            {/* Power-up HUD */}
-           <div className="w-full max-w-[310px] sm:max-w-sm flex flex-col items-center">
+           <div className="w-full max-w-[320px] sm:max-w-sm flex flex-col items-center">
               {/* Power-up Actions Panel */}
-              <div className="w-full bg-slate-950/90 border border-cyan-300/50 p-2 rounded-2xl flex gap-2 shadow-[0_12px_30px_rgba(8,47,73,0.35)] mb-3 md:p-2.5 md:gap-2.5 md:mb-4" style={assetPanelStyle(panels.cosmicCard, 'rgba(15, 23, 42, 0.8)')}>
+              <div className="w-full bg-slate-950/88 border border-cyan-200/35 p-2 rounded-2xl flex gap-2 shadow-[0_12px_30px_rgba(8,47,73,0.32)] mb-3 md:p-2.5 md:gap-2.5 md:mb-3" style={assetPanelStyle(panels.cosmicCard, 'rgba(10, 17, 38, 0.84)')}>
                  <button
                     onClick={activateFreezeTime}
                     disabled={settings.gameMode === GameMode.UNTIMED || freezesLeft <= 0 || freezeTimeRemaining > 0}
                     className={`flex-1 py-2.5 px-2 rounded-xl flex items-center justify-center gap-1.5 transition-all text-[11px] font-extrabold tracking-wider uppercase cursor-pointer select-none active:scale-95 md:py-3 md:px-3 ${
                        settings.gameMode === GameMode.UNTIMED ? 'opacity-30 cursor-not-allowed' :
-                       freezeTimeRemaining > 0 ? 'bg-cyan-500 text-white border-2 border-slate-900 animate-pulse shadow-md shadow-cyan-100' :
-                       freezesLeft > 0 ? 'bg-cyan-100 border-2 border-slate-900 text-cyan-800 hover:bg-cyan-200 shadow-[2px_2px_0_0_#0f172a]' :
-                       'bg-slate-100 border border-slate-200 text-slate-300'
+                       freezeTimeRemaining > 0 ? 'bg-cyan-300/22 text-cyan-50 border border-cyan-200/70 animate-pulse shadow-[0_0_18px_rgba(34,211,238,0.22)]' :
+                       freezesLeft > 0 ? 'bg-cyan-300/12 border border-cyan-200/40 text-cyan-50 hover:bg-cyan-300/18' :
+                       'bg-slate-900/70 border border-slate-700 text-slate-500'
                     }`}
                     title="Freeze timer for 5 seconds (Hotkeys: F)"
                  >
@@ -449,8 +454,8 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
                     onClick={activateHint}
                     disabled={hintsLeft <= 0}
                     className={`flex-1 py-2.5 px-2 rounded-xl flex items-center justify-center gap-1.5 transition-all text-[11px] font-extrabold tracking-wider uppercase cursor-pointer select-none active:scale-95 md:py-3 md:px-3 ${
-                       hintsLeft > 0 ? 'bg-amber-100 border-2 border-slate-900 text-amber-900 hover:bg-amber-200 shadow-[2px_2px_0_0_#0f172a]' :
-                       'bg-slate-100 border border-slate-200 text-slate-300'
+                       hintsLeft > 0 ? 'bg-amber-300/14 border border-amber-200/45 text-amber-100 hover:bg-amber-300/20' :
+                       'bg-slate-900/70 border border-slate-700 text-slate-500'
                     }`}
                     title="Fills first/next correct digit of the answer (Hotkeys: H)"
                   >
@@ -461,7 +466,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
            </div>
 
            {/* Number Pad Container */}
-           <div className="w-full max-w-[310px] sm:max-w-sm mt-1 md:mt-2">
+           <div className="w-full max-w-[320px] sm:max-w-sm mt-1 md:mt-2">
                <AnimatePresence>
                   {feedback === 'incorrect' && (
                      <motion.div 
@@ -472,7 +477,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
                      >
                         <button 
                            onClick={onSkip}
-                           className="flex items-center gap-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 px-6 py-3 rounded-xl font-bold tracking-widest uppercase text-xs transition-colors w-full justify-center"
+                           className="flex items-center gap-2 bg-rose-500/16 hover:bg-rose-500/22 border border-rose-300/50 text-rose-100 px-6 py-3 rounded-xl font-bold tracking-widest uppercase text-xs transition-colors w-full justify-center"
                         >
                            <XCircle className="w-4 h-4" /> Skip Question
                         </button>
@@ -480,38 +485,38 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
                   )}
                </AnimatePresence>
 
-               <div className="grid grid-cols-3 gap-2 md:gap-4">
+               <div className="grid grid-cols-3 gap-2.5 md:gap-3">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
                      <button
                         key={num}
                         onClick={() => handleDigit(num.toString())}
-                        className="bg-slate-950/90 hover:bg-cyan-950 hover:scale-[1.02] active:scale-95 text-cyan-50 border border-cyan-300/55 text-2xl md:text-4xl font-black aspect-square rounded-2xl md:rounded-[32px] flex items-center justify-center shadow-[0_10px_24px_rgba(8,47,73,0.34)] cursor-pointer transition-all"
+                        className="bg-slate-950/90 hover:bg-cyan-950/95 hover:scale-[1.02] active:scale-95 text-cyan-50 border border-cyan-200/45 text-2xl md:text-4xl font-black aspect-square rounded-2xl md:rounded-[1.6rem] flex items-center justify-center shadow-[0_10px_24px_rgba(8,47,73,0.32)] cursor-pointer transition-all backdrop-blur"
                      >
                         {num}
                      </button>
                   ))}
                   
                   {/* Empty cell or dot ? We don't have decimals. */}
-                  <div className="bg-slate-950/90 rounded-2xl md:rounded-[32px] border border-amber-300/55 flex items-center justify-center overflow-hidden p-1 shadow-[0_10px_24px_rgba(251,191,36,0.14)] relative">
+                  <div className="bg-slate-950/90 rounded-2xl md:rounded-[1.6rem] border border-amber-300/45 flex items-center justify-center overflow-hidden p-1 shadow-[0_10px_24px_rgba(251,191,36,0.13)] relative backdrop-blur">
                     <img src={mascots.headAvatar} alt="Pi-bot" className={`w-full h-full object-contain rounded-xl transition-all duration-150 animate-float-pibot ${feedback === 'correct' ? 'scale-[1.15] rotate-6 animate-none' : feedback === 'incorrect' ? 'scale-90 saturate-50 opacity-55 animate-none' : 'scale-100 hover:scale-105'}`} />
                   </div>
                   
                   <button
                      onClick={() => handleDigit('0')}
-                     className="bg-slate-950/90 hover:bg-cyan-950 active:bg-cyan-900 text-cyan-50 border border-cyan-300/55 md:text-3xl font-black aspect-square rounded-2xl md:rounded-[32px] flex items-center justify-center transition-colors shadow-[0_10px_24px_rgba(8,47,73,0.34)]"
+                     className="bg-slate-950/90 hover:bg-cyan-950 active:bg-cyan-900 text-cyan-50 border border-cyan-200/45 text-2xl md:text-3xl font-black aspect-square rounded-2xl md:rounded-[1.6rem] flex items-center justify-center transition-colors shadow-[0_10px_24px_rgba(8,47,73,0.32)]"
                   >
                      0
                   </button>
 
                   <button
                      onClick={handleBackspace}
-                     className="keypad-delete-btn text-white aspect-square rounded-2xl md:rounded-[32px] flex items-center justify-center transform active:translate-y-0.5 cursor-pointer shadow-red-200 shadow-sm"
+                     className="keypad-delete-btn text-white aspect-square rounded-2xl md:rounded-[1.6rem] flex items-center justify-center transform active:translate-y-0.5 cursor-pointer shadow-red-200 shadow-sm"
                   >
                      <Delete className="w-6 h-6 md:w-8 md:h-8" />
                   </button>
                </div>
                
-               <p className="text-center text-[10px] uppercase font-bold tracking-widest text-slate-300 mt-6 md:mt-8 hidden md:block">
+               <p className="text-center text-[10px] uppercase font-bold tracking-widest text-cyan-100/45 mt-4 md:mt-5 hidden md:block">
                   Keyboard input supported
                </p>
            </div>

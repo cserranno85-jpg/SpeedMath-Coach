@@ -19,6 +19,9 @@ import iconDailyChallenge from './ui/icon-daily-challenge.png';
 import iconTimedChallenge from './ui/icon-timed-challenge.png';
 import iconUntimedPractice from './ui/icon-untimed-practice.png';
 
+import speedmathIconForeground from './ui/speedmath-icon-foreground.png';
+import speedmathIconSafeArea from './ui/speedmath-icon-safe-area-1024.png';
+
 import badgeAccuracy90 from './ui/badge-accuracy-90.png';
 import badgeFirstSolve from './ui/badge-first-solve.png';
 import badgeFocusMaster from './ui/badge-focus-master.png';
@@ -68,6 +71,13 @@ export const challengeIcons = {
   daily: iconDailyChallenge,
   timed: iconTimedChallenge,
   untimed: iconUntimedPractice,
+} as const;
+
+export const brandMarks = {
+  primaryLogo: speedmathIconSafeArea,
+  appIcon: speedmathIconSafeArea,
+  emblem: speedmathIconSafeArea,
+  foreground: speedmathIconForeground,
 } as const;
 
 export const badges = {

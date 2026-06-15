@@ -10,6 +10,7 @@ const requiredGroups = [
   'fx',
   'operationIcons',
   'challengeIcons',
+  'brandMarks',
   'badges',
   'buttonGlows',
   'panels',
@@ -33,6 +34,8 @@ const requiredWiredAssetFiles = [
   'icon-subtraction.png',
   'icon-timed-challenge.png',
   'icon-untimed-practice.png',
+  'speedmath-icon-foreground.png',
+  'speedmath-icon-safe-area-1024.png',
   'badge-accuracy-90.png',
   'badge-first-solve.png',
   'badge-focus-master.png',
@@ -104,9 +107,22 @@ if (!fs.existsSync(registryPath)) {
       fail(`Future-only UI asset should remain documented as plain metadata: ${file}`);
     }
   }
+
+  if (!registry.includes('primaryLogo: speedmathIconSafeArea')) {
+    fail('brandMarks.primaryLogo must use speedmath-icon-safe-area-1024.png.');
+  }
+
+  if (!registry.includes('appIcon: speedmathIconSafeArea')) {
+    fail('brandMarks.appIcon must use speedmath-icon-safe-area-1024.png.');
+  }
+
+  if (registry.includes('primaryLogo: speedmathIconForeground') || registry.includes('appIcon: speedmathIconForeground')) {
+    fail('speedmath-icon-foreground.png must not be the primary rendered brand logo.');
+  }
 }
 
 const componentDir = path.join(root, 'src/components');
+const requiredPrimaryLogoComponents = new Set(['Menu.tsx', 'Game.tsx', 'Stats.tsx']);
 for (const file of fs.readdirSync(componentDir)) {
   if (!file.endsWith('.tsx')) continue;
 
@@ -114,6 +130,16 @@ for (const file of fs.readdirSync(componentDir)) {
   const content = fs.readFileSync(fullPath, 'utf8');
   if (content.includes('../assets/ui/')) {
     fail(`${path.relative(root, fullPath)} imports Phase 2H UI assets directly.`);
+  }
+
+  if (requiredPrimaryLogoComponents.has(file)) {
+    if (!content.includes('brandMarks.primaryLogo')) {
+      fail(`${path.relative(root, fullPath)} must render brandMarks.primaryLogo for the visible SpeedMath logo.`);
+    }
+
+    if (content.includes('src={brandMarks.emblem}') || content.includes('src={brandMarks.foreground}')) {
+      fail(`${path.relative(root, fullPath)} must not render the foreground/emblem asset as the primary SpeedMath logo.`);
+    }
   }
 }
 
