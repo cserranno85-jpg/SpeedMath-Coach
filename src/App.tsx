@@ -6,6 +6,7 @@ import { GameOver } from './components/GameOver';
 import { Stats } from './components/Stats';
 import { motion, AnimatePresence } from 'motion/react';
 import { Badge } from './utils/streakAndAchievements';
+import { backgrounds, fx } from './assets/uiAssetRegistry';
 
 type AppState = 'MENU' | 'PLAYING' | 'GAMEOVER' | 'STATS';
 
@@ -78,9 +79,33 @@ export default function App() {
     localStorage.setItem('speedMathProgress', JSON.stringify(progress));
   };
 
+  const screenBackground =
+    appState === 'PLAYING'
+      ? backgrounds.exercise
+      : appState === 'STATS'
+      ? backgrounds.profile
+      : backgrounds.home;
+  const isExerciseScreen = appState === 'PLAYING';
+
   return (
-    <div className="min-h-[100dvh] w-full relative bg-gradient-to-br from-[#FAF5E6] via-[#EFE7D0] to-[#DFD6BA] text-slate-900 font-sans tracking-tight flex items-center justify-center p-3 md:p-8 selection:bg-indigo-100 overflow-x-hidden overflow-y-auto pb-safe pr-safe pl-safe pt-safe">
-       <div className="absolute inset-0 bg-[radial-gradient(#6366f1_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.03] pointer-events-none"></div>
+    <div
+      className={`min-h-[100dvh] w-full relative bg-slate-950 text-slate-900 font-sans tracking-tight flex items-center justify-center selection:bg-cyan-200 overflow-x-hidden pb-safe pr-safe pl-safe pt-safe ${
+        isExerciseScreen ? 'overflow-hidden p-0' : 'overflow-y-auto p-3 md:p-8'
+      }`}
+      style={{
+        backgroundImage: `linear-gradient(180deg, rgba(4, 8, 28, 0.18), rgba(4, 8, 28, 0.72)), url(${screenBackground})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+      }}
+    >
+       <div className="absolute inset-0 bg-[radial-gradient(#22d3ee_1px,transparent_1px)] [background-size:28px_28px] opacity-[0.08] pointer-events-none"></div>
+       <img
+         src={fx.mathParticles}
+         alt=""
+         aria-hidden="true"
+         className="absolute inset-0 h-full w-full object-cover opacity-[0.14] mix-blend-screen pointer-events-none"
+       />
        
        <div className="relative z-10 w-full flex items-center justify-center">
           <AnimatePresence mode="wait">

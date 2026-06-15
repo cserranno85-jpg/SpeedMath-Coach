@@ -6,7 +6,16 @@ import {
 } from 'lucide-react';
 import { calculateStreak, evaluateAchievements, Badge } from '../utils/streakAndAchievements';
 import { sounds } from '../utils/soundEngine';
-import pibotMascot from '../assets/images/pibot-mascot.jpg';
+import {
+  badgeArtByAchievementId,
+  badges as badgeAssets,
+  buttonGlows,
+  challengeIcons,
+  fx,
+  mascots,
+  operationIcons,
+  panels,
+} from '../assets/uiAssetRegistry';
 
 interface MenuProps {
   settings: SettingsType;
@@ -71,6 +80,17 @@ const StopwatchLogo: React.FC = () => {
       </svg>
     </div>
   );
+};
+
+const cardAssetStyle = (asset: string, overlay = 'rgba(10, 16, 42, 0.78)'): React.CSSProperties => ({
+  backgroundImage: `linear-gradient(135deg, ${overlay}, rgba(3, 7, 22, 0.92)), url(${asset})`,
+  backgroundPosition: 'center',
+  backgroundSize: 'cover',
+});
+
+const modeIconByMode: Record<GameMode, string> = {
+  [GameMode.TIMED]: challengeIcons.timed,
+  [GameMode.UNTIMED]: challengeIcons.untimed,
 };
 
 export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartGame, onViewStats }) => {
@@ -151,12 +171,17 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
   const unlockedBadgesCount = badges.filter(b => b.unlocked).length;
 
   return (
-    <div id="menu_layout_root" className="w-full max-w-2xl mx-auto flex flex-col gap-6 selection:bg-indigo-200">
+    <div id="menu_layout_root" className="w-full max-w-2xl mx-auto flex flex-col gap-6 selection:bg-cyan-200">
        
        {/* SpeedMath Coach Premium Logo Banner */}
-       <div className="relative select-none text-white rounded-[2.5rem] bg-gradient-to-b from-[#0c41a2] to-[#002663] border-4 border-slate-900 shadow-[6px_6px_0_0_#0f172a] p-6 md:p-8 overflow-hidden flex flex-col items-center justify-center min-h-[250px] md:min-h-[280px]">
+       <div
+         className="relative select-none text-white rounded-[2.5rem] bg-slate-950 border-4 border-cyan-300/80 shadow-[0_18px_55px_rgba(8,145,178,0.34)] p-6 md:p-8 overflow-hidden flex flex-col items-center justify-center min-h-[250px] md:min-h-[280px]"
+         style={cardAssetStyle(panels.cosmicCard, 'rgba(12, 33, 87, 0.82)')}
+       >
           {/* Subtle grid background overlay inside the banner */}
-          <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] opacity-[0.05] pointer-events-none"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] opacity-[0.08] pointer-events-none"></div>
+          <img src={fx.mathParticles} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-25 mix-blend-screen pointer-events-none" />
+          <img src={fx.purpleEnergyRing} alt="" aria-hidden="true" className="absolute -right-20 -top-20 h-48 w-48 opacity-30 mix-blend-screen pointer-events-none" />
 
           {/* Floating decorative math symbols */}
           <span className="absolute top-6 left-[12%] text-[#1E5AF3] font-black text-4xl opacity-80 pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] select-none">
@@ -212,16 +237,19 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
 
        {/* Mode Navigation Tab Controls & Discreet Sound Mute Button */}
        <div className="flex items-center gap-3 w-full max-w-lg mx-auto">
-          <div className="flex-1 flex justify-center gap-3 bg-[#FAF7EC]/80 border-4 border-slate-900 shadow-[4px_4px_0_0_#0f172a] p-1.5 rounded-3xl">
+          <div
+            className="flex-1 flex justify-center gap-3 bg-slate-950/80 border border-cyan-300/60 shadow-[0_12px_30px_rgba(8,47,73,0.35)] p-1.5 rounded-3xl backdrop-blur"
+            style={cardAssetStyle(panels.navbarGlow, 'rgba(15, 23, 42, 0.7)')}
+          >
             <button
               onClick={() => { sounds.playClick(); setActiveTab('DASHBOARD'); }}
-              className={`flex-1 py-2.5 px-3 rounded-2xl text-[11px] font-black tracking-wider uppercase transition-all flex items-center justify-center gap-1.5 select-none cursor-pointer ${activeTab === 'DASHBOARD' ? 'bg-indigo-600 text-white border-4 border-slate-900 shadow-[2px_2px_0_0_#0f172a]' : 'text-slate-500 hover:text-slate-800'}`}
+              className={`flex-1 py-2.5 px-3 rounded-2xl text-[11px] font-black tracking-wider uppercase transition-all flex items-center justify-center gap-1.5 select-none cursor-pointer ${activeTab === 'DASHBOARD' ? 'bg-cyan-400 text-slate-950 border border-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.45)]' : 'text-cyan-100/70 hover:text-white'}`}
             >
               <BarChart2 className="w-4 h-4" /> Dashboard
             </button>
             <button
               onClick={() => { sounds.playClick(); setActiveTab('SETTINGS'); }}
-              className={`flex-1 py-2.5 px-3 rounded-2xl text-[11px] font-black tracking-wider uppercase transition-all flex items-center justify-center gap-1.5 select-none cursor-pointer ${activeTab === 'SETTINGS' ? 'bg-indigo-600 text-white border-4 border-slate-900 shadow-[2px_2px_0_0_#0f172a]' : 'text-slate-500 hover:text-slate-800'}`}
+              className={`flex-1 py-2.5 px-3 rounded-2xl text-[11px] font-black tracking-wider uppercase transition-all flex items-center justify-center gap-1.5 select-none cursor-pointer ${activeTab === 'SETTINGS' ? 'bg-cyan-400 text-slate-950 border border-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.45)]' : 'text-cyan-100/70 hover:text-white'}`}
             >
               <SettingsIcon className="w-4 h-4" /> Rules & Setup
             </button>
@@ -230,7 +258,7 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
           <button
             id="btn_toggle_mute"
             onClick={handleToggleMute}
-            className={`p-3 rounded-full border-4 border-slate-900 transition-all duration-150 flex items-center justify-center shadow-[3px_3px_0_0_#0f172a] active:translate-y-0.5 active:shadow-[1px_1px_0_0_#0f172a] cursor-pointer shrink-0 ${muted ? 'bg-rose-100/90 text-rose-600' : 'bg-amber-100/90 text-amber-700'}`}
+            className={`p-3 rounded-full border border-cyan-200/70 transition-all duration-150 flex items-center justify-center shadow-[0_10px_24px_rgba(8,47,73,0.28)] active:scale-95 cursor-pointer shrink-0 ${muted ? 'bg-rose-950/80 text-rose-200' : 'bg-amber-300 text-amber-950'}`}
             title={muted ? 'Unmute Volume' : 'Mute Volume'}
           >
             {muted ? <VolumeX className="w-[18px] h-[18px] stroke-[2.5]" /> : <Volume2 className="w-[18px] h-[18px] stroke-[2.5]" />}
@@ -242,19 +270,22 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
          <div id="dashboard_tab_content" className="flex flex-col gap-6">
             
             {/* Pi-bot Interactive Mascot Header (Bigger, animated & Float-styled) */}
-            <div id="pibot_mascot_header" className="bg-gradient-to-br from-indigo-900 to-indigo-950 rounded-3xl border-4 border-slate-900 shadow-[6px_6px_0_0_#0f172a] p-6 text-white overflow-hidden relative">
-               <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500 rounded-full filter blur-3xl opacity-20 pointer-events-none"></div>
-               <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-pink-500 rounded-full filter blur-3xl opacity-15 pointer-events-none"></div>
+            <div
+              id="pibot_mascot_header"
+              className="bg-slate-950 rounded-3xl border border-cyan-300/60 shadow-[0_16px_44px_rgba(8,47,73,0.38)] p-6 text-white overflow-hidden relative"
+              style={cardAssetStyle(panels.cosmicCard)}
+            >
+               <img src={fx.cyanOrbGlow} alt="" aria-hidden="true" className="absolute -top-28 -right-24 h-64 w-64 opacity-25 mix-blend-screen pointer-events-none" />
+               <img src={fx.goldSparkBurst} alt="" aria-hidden="true" className="absolute -bottom-16 -left-16 h-44 w-44 opacity-25 mix-blend-screen pointer-events-none" />
 
                <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
                   {/* Dynamic 3D Mascot Avatar with NO border, circular & drop-shadowed */}
                   <div className="relative shrink-0 select-none">
                      <div className="w-40 h-40 md:w-44 md:h-44 transform hover:scale-105 active:scale-95 transition-all duration-300 animate-float-pibot flex items-center justify-center">
                         <img 
-                           src={pibotMascot}
-                           alt="Pi-bot 3D Mascot"
-                           className="w-full h-full object-cover rounded-full filter drop-shadow-[0_12px_15px_rgba(99,102,241,0.35)]"
-                           referrerPolicy="no-referrer"
+                           src={mascots.waving}
+                           alt="Pi-bot coach"
+                           className="h-full w-auto object-contain filter drop-shadow-[0_18px_24px_rgba(34,211,238,0.35)]"
                         />
                      </div>
                   </div>
@@ -267,7 +298,7 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
                         </h2>
                      </div>
                      
-                     <div className="relative bg-indigo-950/60 rounded-2xl p-4 border border-indigo-800 text-xs md:text-sm text-indigo-100 leading-relaxed max-w-md shadow-inner">
+                     <div className="relative bg-slate-950/70 rounded-2xl p-4 border border-cyan-300/30 text-xs md:text-sm text-cyan-50 leading-relaxed max-w-md shadow-inner">
                         "{getPibotMessage()}"
                      </div>
                   </div>
@@ -278,65 +309,65 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
             <div className="grid grid-cols-2 gap-4">
                
                {/* 1. Daily Streak Card (Volumetric Orange) */}
-               <div className="bg-gradient-to-br from-orange-400 via-amber-500 to-rose-500 text-white rounded-3xl p-5 border-4 border-slate-900 shadow-[4px_4px_0_0_#0f172a] transform hover:scale-[1.02] transition-transform duration-200">
+               <div className="bg-slate-950 text-white rounded-3xl p-5 border border-amber-300/60 shadow-[0_12px_32px_rgba(251,191,36,0.16)] transform hover:scale-[1.02] transition-transform duration-200 overflow-hidden relative" style={cardAssetStyle(panels.statsCard, 'rgba(24, 31, 62, 0.78)')}>
                  <div className="flex justify-between items-start">
                    <div>
-                     <span className="text-[10px] font-black uppercase tracking-widest text-orange-100 block leading-tight">Daily Streak</span>
+                     <span className="text-[10px] font-black uppercase tracking-widest text-amber-200 block leading-tight">Daily Streak</span>
                      <span className="text-2xl md:text-3xl font-black mt-1 block">{streak} {streak === 1 ? 'Day' : 'Days'}</span>
                    </div>
-                   <div className="p-2.5 bg-white/20 rounded-2xl border border-white/30 animate-bounce">
-                     <Flame className="w-6 h-6 text-white fill-white" />
+                   <div className="p-2.5 bg-amber-300/20 rounded-2xl border border-amber-200/40 animate-bounce">
+                     <Flame className="w-6 h-6 text-amber-300 fill-amber-300" />
                    </div>
                  </div>
-                 <p className="text-[9px] md:text-[10px] font-extrabold text-orange-50 leading-tight mt-3.5">
+                 <p className="text-[9px] md:text-[10px] font-extrabold text-cyan-50/80 leading-tight mt-3.5">
                    {streak > 0 ? '🔥 Active training streak! Ready to expand!' : 'Initiate 1 drill to start a training streak.'}
                  </p>
                </div>
 
                {/* 2. Personal Best Card (Volumetric Purple) */}
-               <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white rounded-3xl p-5 border-4 border-slate-900 shadow-[4px_4px_0_0_#0f172a] transform hover:scale-[1.02] transition-transform duration-200">
+               <div className="bg-slate-950 text-white rounded-3xl p-5 border border-purple-300/60 shadow-[0_12px_32px_rgba(168,85,247,0.16)] transform hover:scale-[1.02] transition-transform duration-200 overflow-hidden relative" style={cardAssetStyle(panels.statsCard, 'rgba(30, 25, 68, 0.78)')}>
                  <div className="flex justify-between items-start">
                    <div>
-                     <span className="text-[10px] font-black uppercase tracking-widest text-indigo-100 block leading-tight border-b border-indigo-400/20 pb-0.5">High Score</span>
+                     <span className="text-[10px] font-black uppercase tracking-widest text-purple-100 block leading-tight border-b border-purple-300/20 pb-0.5">High Score</span>
                      <span className="text-2xl md:text-3xl font-black mt-1 block">{highScore} <span className="text-[10px] font-bold">PTS</span></span>
                    </div>
-                   <div className="p-2.5 bg-white/20 rounded-2xl border border-white/30">
+                   <div className="p-2.5 bg-amber-300/20 rounded-2xl border border-amber-200/40">
                      <Crown className="w-6 h-6 text-yellow-300 fill-yellow-300 animate-pulse" />
                    </div>
                  </div>
-                 <p className="text-[9px] md:text-[10px] font-extrabold text-indigo-50 leading-tight mt-3.5">
+                 <p className="text-[9px] md:text-[10px] font-extrabold text-cyan-50/80 leading-tight mt-3.5">
                    Peak computational performance record!
                  </p>
                </div>
 
                {/* 3. Total Solves (Volumetric Green) */}
-               <div className="bg-gradient-to-br from-emerald-400 via-teal-500 to-green-500 text-white rounded-3xl p-5 border-4 border-slate-900 shadow-[4px_4px_0_0_#0f172a] transform hover:scale-[1.02] transition-transform duration-200">
+               <div className="bg-slate-950 text-white rounded-3xl p-5 border border-cyan-300/60 shadow-[0_12px_32px_rgba(34,211,238,0.16)] transform hover:scale-[1.02] transition-transform duration-200 overflow-hidden relative" style={cardAssetStyle(panels.statsCard, 'rgba(14, 41, 64, 0.8)')}>
                  <div className="flex justify-between items-start">
                    <div>
-                     <span className="text-[10px] font-black uppercase tracking-widest text-emerald-100 block leading-tight">Total Solved</span>
+                     <span className="text-[10px] font-black uppercase tracking-widest text-cyan-100 block leading-tight">Total Solved</span>
                      <span className="text-2xl md:text-3xl font-black mt-1 block">{totalSolves}</span>
                    </div>
-                   <div className="p-2.5 bg-white/20 rounded-2xl border border-white/30">
-                     <Award className="w-6 h-6 text-emerald-100 fill-emerald-100" />
+                   <div className="p-2.5 bg-cyan-300/20 rounded-2xl border border-cyan-200/40">
+                     <Award className="w-6 h-6 text-cyan-100 fill-cyan-100" />
                    </div>
                  </div>
-                 <p className="text-[9px] md:text-[10px] font-extrabold text-emerald-50 leading-tight mt-3.5">
+                 <p className="text-[9px] md:text-[10px] font-extrabold text-cyan-50/80 leading-tight mt-3.5">
                    Surgical arithmetic equations completed!
                  </p>
                </div>
 
                {/* 4. Accuracy (Volumetric Sky) */}
-               <div className="bg-gradient-to-br from-sky-400 via-cyan-500 to-blue-500 text-white rounded-3xl p-5 border-4 border-slate-900 shadow-[4px_4px_0_0_#0f172a] transform hover:scale-[1.02] transition-transform duration-200">
+               <div className="bg-slate-950 text-white rounded-3xl p-5 border border-cyan-300/60 shadow-[0_12px_32px_rgba(34,211,238,0.16)] transform hover:scale-[1.02] transition-transform duration-200 overflow-hidden relative" style={cardAssetStyle(panels.statsCard, 'rgba(7, 37, 70, 0.8)')}>
                  <div className="flex justify-between items-start">
                    <div>
-                     <span className="text-[10px] font-black uppercase tracking-widest text-sky-100 block leading-tight">Precision</span>
+                     <span className="text-[10px] font-black uppercase tracking-widest text-cyan-100 block leading-tight">Precision</span>
                      <span className="text-2xl md:text-3xl font-black mt-1 block">{accuracy}%</span>
                    </div>
-                   <div className="p-2.5 bg-white/20 rounded-2xl border border-white/30">
-                     <Target className="w-6 h-6 text-sky-100" />
+                   <div className="p-2.5 bg-cyan-300/20 rounded-2xl border border-cyan-200/40">
+                     <Target className="w-6 h-6 text-cyan-100" />
                    </div>
                  </div>
-                 <p className="text-[9px] md:text-[10px] font-extrabold text-sky-50 leading-tight mt-3.5">
+                 <p className="text-[9px] md:text-[10px] font-extrabold text-cyan-50/80 leading-tight mt-3.5">
                    {accuracy > 90 ? '🎯 Absolutely surgical precision!' : 'Maintain target above 85%.'}
                  </p>
                </div>
@@ -344,14 +375,14 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
             </div>
 
             {/* Badges Achievements Block (Cartoon Grid) - bg-white replaced with bg-[#FAF7EC] */}
-            <div className="bg-[#FAF7EC] border-4 border-slate-900 shadow-[6px_6px_0_0_#0f172a] rounded-3xl p-5">
-              <div className="flex justify-between items-center mb-4 border-b-2 border-slate-900/10 pb-3">
-                 <h4 className="text-xs md:text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-1.5">
+            <div className="bg-slate-950/90 border border-cyan-300/50 shadow-[0_16px_40px_rgba(8,47,73,0.35)] rounded-3xl p-5 text-white" style={cardAssetStyle(panels.cosmicCard)}>
+              <div className="flex justify-between items-center mb-4 border-b border-cyan-100/15 pb-3">
+                 <h4 className="text-xs md:text-sm font-black text-cyan-50 uppercase tracking-widest flex items-center gap-1.5">
                     <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Medals Unlocked ({unlockedBadgesCount} / {badges.length})
                  </h4>
                  <button 
                    onClick={() => { sounds.playClick(); onViewStats(); }}
-                   className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-wider underline cursor-pointer"
+                   className="text-[10px] font-black text-cyan-300 hover:text-cyan-100 uppercase tracking-wider underline cursor-pointer"
                  >
                    View Stats Detail
                  </button>
@@ -363,46 +394,54 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
                       key={badge.id}
                       className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 text-center transition-all ${
                          badge.unlocked 
-                           ? 'bg-amber-50/60 border-amber-300 text-amber-900 shadow-sm' 
-                           : 'bg-slate-50 border-slate-200 text-slate-300 opacity-60'
+                           ? 'bg-amber-200/10 border-amber-300/70 text-amber-100 shadow-[0_0_18px_rgba(251,191,36,0.14)]' 
+                           : 'bg-slate-950/40 border-slate-600/60 text-slate-400 opacity-70'
                       }`}
                       title={badge.description}
                     >
-                      {badge.unlocked ? (
-                         <div className="w-9 h-9 flex items-center justify-center bg-amber-100 text-amber-600 rounded-xl mb-1.5 border border-amber-200 shadow-inner relative">
-                            <span className="text-lg">🏆</span>
-                            <span className="absolute -top-1 -right-1 bg-emerald-500 text-[6px] text-white font-black px-1 rounded-full border border-emerald-300">OK</span>
-                         </div>
-                      ) : (
-                         <div className="w-9 h-9 flex items-center justify-center bg-slate-100 text-slate-400 border border-slate-200 rounded-xl mb-1.5">
-                            <span className="text-xs">🔒</span>
-                          </div>
-                      )}
+                      <div className="w-11 h-11 flex items-center justify-center rounded-xl mb-1.5 relative">
+                         <img
+                           src={badge.unlocked ? (badgeArtByAchievementId[badge.id] ?? badgeAssets.firstSolve) : badgeAssets.locked}
+                           alt=""
+                           aria-hidden="true"
+                           className={`w-full h-full object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.35)] ${badge.unlocked ? '' : 'grayscale opacity-80'}`}
+                         />
+                         {badge.unlocked && <span className="absolute -top-1 -right-1 bg-cyan-400 text-[6px] text-slate-950 font-black px-1 rounded-full border border-cyan-100">OK</span>}
+                      </div>
                       <span className="text-[10px] font-black tracking-tight leading-tight block truncate w-full">{badge.title}</span>
-                      <span className="text-[8px] text-slate-400 capitalize block truncate w-full mt-0.5">{badge.id.replace(/_/g, ' ')}</span>
+                      <span className="text-[8px] text-cyan-100/45 capitalize block truncate w-full mt-0.5">{badge.id.replace(/_/g, ' ')}</span>
                     </div>
                  ))}
               </div>
             </div>
 
             {/* Immediate Play Action Container - bg-white replaced with bg-[#FAF7EC] */}
-            <div className="flex flex-col gap-3 items-stretch bg-[#FAF7EC] border-4 border-slate-900 shadow-[6px_6px_0_0_#0f172a] rounded-3xl p-6 text-center">
+            <div className="flex flex-col gap-3 items-stretch bg-slate-950/90 border border-cyan-300/50 shadow-[0_16px_40px_rgba(8,47,73,0.35)] rounded-3xl p-6 text-center text-white" style={cardAssetStyle(panels.cosmicCard)}>
               <button 
                 id="btn_start_session_dashboard"
                 onClick={() => { sounds.playClick(); onStartGame(); }}
-                className="w-full py-4 bg-gradient-to-b from-amber-400 to-amber-500 border-4 border-slate-900 text-amber-950 rounded-2xl font-black text-sm tracking-wider uppercase flex items-center justify-center gap-2.5 transition-all duration-150 shadow-[4px_4px_0_0_#0f172a] hover:bg-amber-300 active:scale-95 cursor-pointer"
+                className="w-full py-4 border border-amber-100/70 text-amber-950 rounded-2xl font-black text-sm tracking-wider uppercase flex items-center justify-center gap-2.5 transition-all duration-150 shadow-[0_0_28px_rgba(251,191,36,0.28)] hover:brightness-110 active:scale-95 cursor-pointer"
+                style={{
+                  backgroundImage: `linear-gradient(180deg, rgba(251, 191, 36, 0.88), rgba(245, 158, 11, 0.92)), url(${buttonGlows.primary})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
               >
                 <Play className="w-5 h-5 fill-current text-purple-950 shrink-0" />
                 Start SpeedMath Drill
               </button>
-              <div className="text-[10px] sm:text-xs text-slate-500 font-bold flex flex-wrap justify-center items-center gap-x-2.5 gap-y-1">
-                <span className="text-slate-500 font-medium">Training Config:</span>
-                <span className="px-2 py-0.5 rounded-xl bg-slate-100 text-slate-700 uppercase font-extrabold text-[9px] border border-slate-200">{settings.gameMode}</span>
-                <span className="px-2 py-0.5 rounded-xl bg-indigo-50 text-indigo-700 uppercase font-extrabold text-[9px] border border-indigo-100">{settings.difficulty}</span>
-                <span className="text-slate-400">•</span>
+              <div className="text-[10px] sm:text-xs text-cyan-50/70 font-bold flex flex-wrap justify-center items-center gap-x-2.5 gap-y-1">
+                <span className="text-cyan-50/70 font-medium">Training Config:</span>
+                <span className="px-2 py-0.5 rounded-xl bg-amber-300/15 text-amber-100 uppercase font-extrabold text-[9px] border border-amber-200/20 flex items-center gap-1">
+                  <img src={challengeIcons.daily} alt="" aria-hidden="true" className="w-4 h-4 object-contain" />
+                  Daily
+                </span>
+                <span className="px-2 py-0.5 rounded-xl bg-cyan-300/15 text-cyan-100 uppercase font-extrabold text-[9px] border border-cyan-200/20">{settings.gameMode}</span>
+                <span className="px-2 py-0.5 rounded-xl bg-purple-300/15 text-purple-100 uppercase font-extrabold text-[9px] border border-purple-200/20">{settings.difficulty}</span>
+                <span className="text-cyan-100/40">•</span>
                 <button
                    onClick={() => { sounds.playClick(); setActiveTab('SETTINGS'); }}
-                   className="font-black text-indigo-600 hover:text-indigo-800 underline uppercase text-[10px] cursor-pointer"
+                   className="font-black text-cyan-300 hover:text-cyan-100 underline uppercase text-[10px] cursor-pointer"
                 >
                    Modify Game Rules
                 </button>
@@ -414,33 +453,35 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
 
        {/* TAB 2: DETAILED TRAINING SYSTEM SETTINGS - bg-white replaced with bg-[#FAF7EC] */}
        {activeTab === 'SETTINGS' && (
-          <div id="session_setup_card" className="w-full bg-[#FAF7EC] rounded-3xl border-4 border-slate-900 shadow-[6px_6px_0_0_#0f172a] p-6 md:p-8 space-y-6">
-             <div className="border-b-2 border-slate-900/10 pb-4">
-               <h3 className="text-lg md:text-xl font-black text-slate-800 flex items-center gap-2">
-                  <SettingsIcon className="w-5 h-5 text-indigo-600" /> Calibration Panel
+          <div id="session_setup_card" className="w-full bg-slate-950/90 rounded-3xl border border-cyan-300/60 shadow-[0_16px_44px_rgba(8,47,73,0.38)] p-6 md:p-8 space-y-6 text-white" style={cardAssetStyle(panels.cosmicCard)}>
+             <div className="border-b border-cyan-100/15 pb-4">
+               <h3 className="text-lg md:text-xl font-black text-cyan-50 flex items-center gap-2">
+                  <SettingsIcon className="w-5 h-5 text-cyan-300" /> Calibration Panel
                </h3>
-               <p className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mt-1">Configure your numerical parameters</p>
+               <p className="text-[10px] md:text-xs font-black text-cyan-100/45 uppercase tracking-widest mt-1">Configure your numerical parameters</p>
              </div>
 
              <div className="space-y-6">
                {/* Practice Mode */}
                <div>
-                 <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-widest mb-3 border-b-2 border-slate-900/10 pb-1 flex items-center gap-1.5">
-                    🎯 Training Format
+                 <h4 className="text-[11px] font-black text-cyan-50 uppercase tracking-widest mb-3 border-b border-cyan-100/15 pb-1 flex items-center gap-1.5">
+                    <img src={modeIconByMode[settings.gameMode]} alt="" aria-hidden="true" className="w-5 h-5 object-contain" /> Training Format
                  </h4>
                  <div className="grid grid-cols-2 gap-3">
                     <button
                        id="btn_mode_timed"
                        onClick={() => { sounds.playClick(); onSettingsChange({ ...settings, gameMode: GameMode.TIMED }); }}
-                       className={`py-3 px-4 rounded-2xl font-black text-xs transition-colors border-2 ${settings.gameMode === GameMode.TIMED ? 'bg-indigo-600 border-slate-900 text-white shadow-[2px_2px_0_0_#0f172a]' : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300'}`}
+                       className={`py-3 px-4 rounded-2xl font-black text-xs transition-colors border flex items-center justify-center gap-2 ${settings.gameMode === GameMode.TIMED ? 'bg-cyan-400 border-cyan-100 text-slate-950 shadow-[0_0_18px_rgba(34,211,238,0.35)]' : 'bg-slate-950/50 border-cyan-100/15 text-cyan-100/60 hover:border-cyan-200/40'}`}
                      >
+                       <img src={challengeIcons.timed} alt="" aria-hidden="true" className="w-6 h-6 object-contain" />
                        Timed Drill
                      </button>
                      <button
                        id="btn_mode_untimed"
                        onClick={() => { sounds.playClick(); onSettingsChange({ ...settings, gameMode: GameMode.UNTIMED }); }}
-                       className={`py-3 px-4 rounded-2xl font-black text-xs transition-colors border-2 ${settings.gameMode === GameMode.UNTIMED ? 'bg-indigo-600 border-slate-900 text-white shadow-[2px_2px_0_0_#0f172a]' : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300'}`}
+                       className={`py-3 px-4 rounded-2xl font-black text-xs transition-colors border flex items-center justify-center gap-2 ${settings.gameMode === GameMode.UNTIMED ? 'bg-cyan-400 border-cyan-100 text-slate-950 shadow-[0_0_18px_rgba(34,211,238,0.35)]' : 'bg-slate-950/50 border-cyan-100/15 text-cyan-100/60 hover:border-cyan-200/40'}`}
                      >
+                       <img src={challengeIcons.untimed} alt="" aria-hidden="true" className="w-6 h-6 object-contain" />
                        Untimed Practice
                      </button>
                  </div>
@@ -448,18 +489,19 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
 
                {/* Operations */}
                <div>
-                 <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-widest mb-3 border-b-2 border-slate-900/10 pb-1 flex items-center gap-1.5">
-                    🎛️ Active Operations
+                 <h4 className="text-[11px] font-black text-cyan-50 uppercase tracking-widest mb-3 border-b border-cyan-100/15 pb-1 flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-cyan-300" /> Active Operations
                  </h4>
                  <div className="grid grid-cols-2 gap-3">
                    {Object.values(Operation).map((op) => (
-                     <label key={op} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border-2 cursor-pointer transition-colors text-xs font-black select-none ${settings.operations[op] ? 'bg-indigo-50/80 border-slate-900 text-indigo-900 shadow-[2px_2px_0_0_#0f172a]' : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300'}`}>
+                     <label key={op} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border cursor-pointer transition-colors text-xs font-black select-none ${settings.operations[op] ? 'bg-cyan-300/15 border-cyan-200/70 text-cyan-50 shadow-[0_0_18px_rgba(34,211,238,0.14)]' : 'bg-slate-950/50 border-cyan-100/15 text-cyan-100/55 hover:border-cyan-200/40'}`}>
                        <input 
                          type="checkbox" 
                          className="w-[18px] h-[18px] rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600 cursor-pointer" 
                          checked={settings.operations[op]}
                          onChange={() => toggleOperation(op)} 
                        />
+                       <img src={operationIcons[op]} alt="" aria-hidden="true" className="w-7 h-7 object-contain" />
                        <span className="font-extrabold capitalize">{op.toLowerCase()}</span>
                      </label>
                    ))}
@@ -468,7 +510,7 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
 
                {/* Difficulty */}
                <div>
-                 <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-widest mb-3 border-b-2 border-slate-900/10 pb-1 flex items-center gap-1.5">
+                 <h4 className="text-[11px] font-black text-cyan-50 uppercase tracking-widest mb-3 border-b border-cyan-100/15 pb-1 flex items-center gap-1.5">
                     🔋 Base Difficulty
                  </h4>
                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
@@ -477,7 +519,7 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
                         key={diff}
                         id={`btn_diff_${diff.toLowerCase()}`}
                         onClick={() => { sounds.playClick(); onSettingsChange({ ...settings, difficulty: diff }); }}
-                        className={`py-2.5 px-3 rounded-xl font-black text-xs transition-colors border-2 ${settings.difficulty === diff ? 'bg-indigo-600 border-slate-900 text-white shadow-[2px_2px_0_0_#0f172a]' : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300'}`}
+                        className={`py-2.5 px-3 rounded-xl font-black text-xs transition-colors border ${settings.difficulty === diff ? 'bg-purple-400 border-purple-100 text-slate-950 shadow-[0_0_18px_rgba(168,85,247,0.32)]' : 'bg-slate-950/50 border-cyan-100/15 text-cyan-100/60 hover:border-cyan-200/40'}`}
                       >
                         {diff}
                       </button>
@@ -486,12 +528,12 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
                </div>
 
                {/* AI Progressive */}
-               <label className="flex items-start justify-between p-4 bg-slate-50 rounded-2xl border-2 border-slate-200 cursor-pointer active:bg-slate-100 transition-colors select-none">
+               <label className="flex items-start justify-between p-4 bg-slate-950/50 rounded-2xl border border-cyan-100/15 cursor-pointer active:bg-slate-900 transition-colors select-none">
                  <div>
-                   <div className="text-xs font-black text-slate-800 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> adaptive learning calibration
+                   <div className="text-xs font-black text-cyan-50 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-cyan-300" /> adaptive learning calibration
                    </div>
-                   <p className="text-[10px] text-slate-400 leading-normal mt-1">Automatically scale mathematical complexity based on your instantaneous accuracy during the drills.</p>
+                   <p className="text-[10px] text-cyan-100/55 leading-normal mt-1">Automatically scale mathematical complexity based on your instantaneous accuracy during the drills.</p>
                  </div>
                  <input 
                    type="checkbox" 
@@ -504,8 +546,8 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
                {/* Duration */}
                {settings.gameMode === GameMode.TIMED && (
                  <div>
-                   <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-widest mb-3 border-b-2 border-slate-900/10 pb-1 flex items-center gap-1.5">
-                      ⏱️ session duration
+                   <h4 className="text-[11px] font-black text-cyan-50 uppercase tracking-widest mb-3 border-b border-cyan-100/15 pb-1 flex items-center gap-1.5">
+                      <img src={challengeIcons.timed} alt="" aria-hidden="true" className="w-5 h-5 object-contain" /> session duration
                    </h4>
                    <div className="grid grid-cols-4 gap-2.5">
                      {[30, 60, 120, 300].map((time) => (
@@ -513,7 +555,7 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
                          key={time}
                          id={`btn_duration_${time}`}
                          onClick={() => { sounds.playClick(); onSettingsChange({ ...settings, gameDurationSeconds: time }); }}
-                         className={`py-2 px-3 rounded-xl font-black text-xs border-2 transition-colors ${settings.gameDurationSeconds === time ? 'bg-indigo-600 border-slate-900 text-white shadow-[2px_2px_0_0_#0f172a]' : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300'}`}
+                         className={`py-2 px-3 rounded-xl font-black text-xs border transition-colors ${settings.gameDurationSeconds === time ? 'bg-cyan-400 border-cyan-100 text-slate-950 shadow-[0_0_18px_rgba(34,211,238,0.35)]' : 'bg-slate-950/50 border-cyan-100/15 text-cyan-100/60 hover:border-cyan-200/40'}`}
                        >
                          {time < 60 ? `${time}s` : `${time / 60}m`}
                        </button>
@@ -527,14 +569,19 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
                  <button 
                    id="btn_save_back"
                    onClick={() => { sounds.playClick(); setActiveTab('DASHBOARD'); }}
-                   className="flex-1 py-4 bg-indigo-600 hover:bg-indigo-700 border-4 border-slate-900 text-white rounded-2xl font-black text-xs tracking-widest uppercase flex items-center justify-center gap-1.5 shadow-[4px_4px_0_0_#0f172a] active:scale-95 cursor-pointer"
+                   className="flex-1 py-4 bg-cyan-400 hover:bg-cyan-300 border border-cyan-100 text-slate-950 rounded-2xl font-black text-xs tracking-widest uppercase flex items-center justify-center gap-1.5 shadow-[0_0_22px_rgba(34,211,238,0.25)] active:scale-95 cursor-pointer"
                  >
                    <Check className="w-4 h-4 stroke-[2.5]" /> Apply & Show Dashboard
                  </button>
                  <button 
                    id="btn_play_direct"
                    onClick={() => { sounds.playClick(); onStartGame(); }}
-                   className="flex-1 py-4 bg-gradient-to-b from-amber-400 to-amber-500 border-4 border-slate-900 text-amber-950 rounded-2xl font-black text-xs tracking-widest uppercase flex items-center justify-center gap-1.5 shadow-[4px_4px_0_0_#0f172a] active:scale-95 cursor-pointer"
+                   className="flex-1 py-4 border border-amber-100 text-amber-950 rounded-2xl font-black text-xs tracking-widest uppercase flex items-center justify-center gap-1.5 shadow-[0_0_22px_rgba(251,191,36,0.25)] active:scale-95 cursor-pointer"
+                   style={{
+                     backgroundImage: `linear-gradient(180deg, rgba(251, 191, 36, 0.9), rgba(245, 158, 11, 0.95)), url(${buttonGlows.primary})`,
+                     backgroundSize: 'cover',
+                     backgroundPosition: 'center',
+                   }}
                  >
                    <Play className="w-[18px] h-[18px] fill-current" /> Play Drills Instantly
                  </button>

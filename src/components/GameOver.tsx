@@ -1,9 +1,16 @@
 import React, { useEffect } from 'react';
-import { RotateCw, Trophy, Clock, Award, Star } from 'lucide-react';
+import { RotateCw, Trophy, Clock, Star } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from '../utils/streakAndAchievements';
 import { sounds } from '../utils/soundEngine';
-import pibotMascot from '../assets/images/pibot-mascot.jpg';
+import {
+  badgeArtByAchievementId,
+  badges as badgeAssets,
+  buttonGlows,
+  fx,
+  mascots,
+  panels,
+} from '../assets/uiAssetRegistry';
 
 interface GameOverProps {
   score: number;
@@ -13,6 +20,12 @@ interface GameOverProps {
   onPlayAgain: () => void;
   onMenu: () => void;
 }
+
+const modalPanelStyle = (asset: string, overlay = 'rgba(8, 13, 32, 0.84)'): React.CSSProperties => ({
+  backgroundImage: `linear-gradient(135deg, ${overlay}, rgba(2, 6, 23, 0.92)), url(${asset})`,
+  backgroundPosition: 'center',
+  backgroundSize: 'cover',
+});
 
 export const GameOver: React.FC<GameOverProps> = ({ score, totalQuestions, history, unlockedBadges, onPlayAgain, onMenu }) => {
   const accuracy = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
@@ -52,20 +65,22 @@ export const GameOver: React.FC<GameOverProps> = ({ score, totalQuestions, histo
        id="gameover_screen_root"
        initial={{ opacity: 0, y: 20 }}
        animate={{ opacity: 1, y: 0 }}
-       className="w-full max-w-xl mx-auto bg-white rounded-2xl border-2 border-slate-200 shadow-xl p-6 md:p-8"
+       className="w-full max-w-xl mx-auto bg-slate-950/92 rounded-2xl border border-cyan-300/60 shadow-[0_20px_60px_rgba(8,47,73,0.42)] p-6 md:p-8 text-white overflow-hidden relative"
+       style={modalPanelStyle(panels.modalGlow)}
     >
+       <img src={fx.mathParticles} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-10 mix-blend-screen pointer-events-none" />
+       <div className="relative z-10">
        {/* High Polish Mascot Presenter Header */}
-       <div className="flex flex-col sm:flex-row items-center gap-5 p-5 bg-gradient-to-br from-indigo-900 to-indigo-950 rounded-2xl border border-indigo-800 text-white mb-6 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full filter blur-2xl pointer-events-none"></div>
+       <div className="flex flex-col sm:flex-row items-center gap-5 p-5 bg-slate-950/70 rounded-2xl border border-cyan-300/35 text-white mb-6 relative overflow-hidden">
+          <img src={fx.goldSparkBurst} alt="" aria-hidden="true" className="absolute -top-12 -right-12 w-36 h-36 opacity-25 mix-blend-screen pointer-events-none" />
           
           {/* Animated 3D Mascot Avatar Frame */}
           <div className="relative shrink-0 select-none">
              <div className="w-20 h-20 transform -rotate-3 hover:rotate-0 transition-transform duration-300 animate-float-pibot">
                 <img 
-                   src={pibotMascot}
-                   alt="Pi-bot 3D Mascot"
-                   className="w-full h-full object-cover rounded-full filter drop-shadow-md"
-                   referrerPolicy="no-referrer"
+                   src={mascots.pointing}
+                   alt="Pi-bot coach"
+                   className="w-full h-full object-contain filter drop-shadow-[0_10px_18px_rgba(34,211,238,0.28)]"
                 />
              </div>
           </div>
@@ -81,35 +96,36 @@ export const GameOver: React.FC<GameOverProps> = ({ score, totalQuestions, histo
        </div>
 
        <div className="text-center mb-6">
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Practice Complete</h2>
-            <p className="text-xs text-slate-400 font-medium tracking-tight mt-1">Here is your speed math performance.</p>
+            <h2 className="text-2xl font-black text-cyan-50 tracking-tight">Practice Complete</h2>
+            <p className="text-xs text-cyan-100/55 font-medium tracking-tight mt-1">Here is your speed math performance.</p>
        </div>
 
        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 flex flex-col items-center justify-center">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Score</span>
-              <span className="text-4xl font-mono font-bold text-indigo-600 tracking-tighter">{score}</span>
+          <div className="bg-slate-950/70 p-6 rounded-xl border border-cyan-300/35 flex flex-col items-center justify-center" style={modalPanelStyle(panels.statsCard, 'rgba(10, 28, 52, 0.74)')}>
+              <span className="text-[10px] font-bold text-cyan-100/55 uppercase tracking-widest mb-1">Score</span>
+              <span className="text-4xl font-mono font-bold text-cyan-200 tracking-tighter">{score}</span>
           </div>
-          <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 flex flex-col items-center justify-center">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Accuracy</span>
-              <span className="text-4xl font-mono font-bold text-emerald-600 tracking-tighter">{accuracy}%</span>
+          <div className="bg-slate-950/70 p-6 rounded-xl border border-amber-300/35 flex flex-col items-center justify-center" style={modalPanelStyle(panels.statsCard, 'rgba(34, 28, 39, 0.74)')}>
+              <span className="text-[10px] font-bold text-amber-100/60 uppercase tracking-widest mb-1">Accuracy</span>
+              <span className="text-4xl font-mono font-bold text-amber-200 tracking-tighter">{accuracy}%</span>
           </div>
        </div>
 
        {/* Unlocked Badges Tray on gameover */}
        {unlockedBadges.length > 0 && (
-         <div id="unlocked_badges_toast_tray" className="mb-6 bg-amber-50/50 p-4 rounded-xl border border-amber-200/60 shadow-sm shadow-amber-50">
-            <h4 className="text-[10px] font-bold text-amber-800 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+         <div id="unlocked_badges_toast_tray" className="mb-6 bg-amber-200/10 p-4 rounded-xl border border-amber-300/45 shadow-[0_0_22px_rgba(251,191,36,0.12)] relative overflow-hidden">
+            <img src={badgeAssets.unlockBurst} alt="" aria-hidden="true" className="absolute -right-14 -top-14 h-36 w-36 opacity-25 mix-blend-screen pointer-events-none" />
+            <h4 className="relative text-[10px] font-bold text-amber-200 uppercase tracking-widest mb-3 flex items-center gap-1.5">
                <Star className="w-4 h-4 text-amber-500 fill-amber-500" /> New Achievements ({unlockedBadges.length})
             </h4>
-            <div className="flex flex-wrap gap-2">
+            <div className="relative flex flex-wrap gap-2">
                {unlockedBadges.map(badge => (
                   <span 
                     key={badge.id}
                     title={badge.description}
-                    className="flex items-center gap-1.5 bg-white border border-amber-300 text-amber-800 px-3 py-1.5 rounded-full text-[10px] lg:text-xs font-bold shadow-sm"
+                    className="flex items-center gap-1.5 bg-slate-950/75 border border-amber-300/45 text-amber-100 px-3 py-1.5 rounded-full text-[10px] lg:text-xs font-bold shadow-sm"
                   >
-                     <Award className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                     <img src={badgeArtByAchievementId[badge.id] ?? badgeAssets.firstSolve} alt="" aria-hidden="true" className="w-5 h-5 object-contain shrink-0" />
                      {badge.title}
                   </span>
                ))}
@@ -118,21 +134,21 @@ export const GameOver: React.FC<GameOverProps> = ({ score, totalQuestions, histo
        )}
 
        <div className="mb-8">
-            <h3 className="text-[10px] font-bold text-slate-800 uppercase tracking-widest mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
-                <Clock className="w-4 h-4 text-slate-500" /> Speed Intervals
+            <h3 className="text-[10px] font-bold text-cyan-50 uppercase tracking-widest mb-4 flex items-center gap-2 border-b border-cyan-100/15 pb-2">
+                <Clock className="w-4 h-4 text-cyan-300" /> Speed Intervals
             </h3>
             <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 text-slate-700 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-slate-950/65 border border-cyan-100/15 text-cyan-50 rounded-lg">
                     <div className="flex items-center gap-2 text-xs font-bold">Under 3 seconds</div>
-                    <div className="font-mono font-bold text-indigo-600 text-sm">{under3s} <span className="text-[10px] text-slate-400">ans</span></div>
+                    <div className="font-mono font-bold text-cyan-300 text-sm">{under3s} <span className="text-[10px] text-cyan-100/45">ans</span></div>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 text-slate-700 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-slate-950/65 border border-cyan-100/15 text-cyan-50 rounded-lg">
                     <div className="flex items-center gap-2 text-xs font-bold">3 - 5 seconds</div>
-                    <div className="font-mono font-bold text-indigo-600 text-sm">{under5s} <span className="text-[10px] text-slate-400">ans</span></div>
+                    <div className="font-mono font-bold text-cyan-300 text-sm">{under5s} <span className="text-[10px] text-cyan-100/45">ans</span></div>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 text-slate-700 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-slate-950/65 border border-cyan-100/15 text-cyan-50 rounded-lg">
                     <div className="flex items-center gap-2 text-xs font-bold">Over 5 seconds</div>
-                    <div className="font-mono font-bold text-indigo-600 text-sm">{over5s} <span className="text-[10px] text-slate-400">ans</span></div>
+                    <div className="font-mono font-bold text-cyan-300 text-sm">{over5s} <span className="text-[10px] text-cyan-100/45">ans</span></div>
                 </div>
             </div>
        </div>
@@ -141,17 +157,23 @@ export const GameOver: React.FC<GameOverProps> = ({ score, totalQuestions, histo
             <button 
               id="btn_gameover_settings"
               onClick={() => { sounds.playClick(); onMenu(); }}
-              className="flex-1 py-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 hover:text-slate-700 rounded-2xl font-bold text-xs tracking-widest uppercase flex items-center justify-center transition-all duration-150 transform active:scale-95 cursor-pointer shadow-sm"
+              className="flex-1 py-4 bg-slate-950/75 hover:bg-slate-900 border border-cyan-100/20 text-cyan-100/70 hover:text-cyan-100 rounded-2xl font-bold text-xs tracking-widest uppercase flex items-center justify-center transition-all duration-150 transform active:scale-95 cursor-pointer shadow-sm"
             >
                Settings
             </button>
             <button 
               id="btn_gameover_playagain"
               onClick={() => { sounds.playClick(); onPlayAgain(); }}
-              className="flex-1 py-4 gold-button text-amber-950 rounded-2xl font-black text-xs tracking-widest uppercase flex items-center justify-center gap-2 transition-all duration-150 transform active:scale-95 cursor-pointer shadow-[0_4px_15px_rgba(217,119,6,0.25)]"
+              className="flex-1 py-4 text-amber-950 rounded-2xl font-black text-xs tracking-widest uppercase flex items-center justify-center gap-2 transition-all duration-150 transform active:scale-95 cursor-pointer shadow-[0_0_22px_rgba(251,191,36,0.25)] border border-amber-100"
+              style={{
+                backgroundImage: `linear-gradient(180deg, rgba(251, 191, 36, 0.9), rgba(245, 158, 11, 0.95)), url(${buttonGlows.primary})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
             >
               <RotateCw className="w-4 h-4" /> Play Again
             </button>
+       </div>
        </div>
     </motion.div>
   );
