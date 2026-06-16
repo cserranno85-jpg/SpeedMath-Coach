@@ -46,9 +46,10 @@ import {
 interface StatsProps {
   onBack: () => void;
   onStartGame: () => void;
+  onNavigate: (state: 'HOME' | 'PRACTICE' | 'PROGRESS' | 'PROFILE' | 'CHALLENGES') => void;
 }
 
-export const Stats: React.FC<StatsProps> = ({ onBack, onStartGame }) => {
+export const Stats: React.FC<StatsProps> = ({ onBack, onStartGame, onNavigate }) => {
   const [progress, setProgress] = useState<any[]>([]);
   const [badges, setBadges] = useState<Badge[]>([]);
 
@@ -131,10 +132,14 @@ export const Stats: React.FC<StatsProps> = ({ onBack, onStartGame }) => {
 
   const handleNavSelect = (key: PremiumNavKey) => {
     sounds.playClick();
-    if (key === 'home' || key === 'challenges') {
+    if (key === 'home') {
       onBack();
     } else if (key === 'practice') {
-      onStartGame();
+      onNavigate('PRACTICE');
+    } else if (key === 'challenges') {
+      onNavigate('CHALLENGES');
+    } else if (key === 'profile') {
+      onNavigate('PROFILE');
     }
   };
 
@@ -158,14 +163,14 @@ export const Stats: React.FC<StatsProps> = ({ onBack, onStartGame }) => {
       label: 'High score',
       value: `${highestScore}`,
       icon: Trophy,
-      className: 'border-amber-300/55 text-amber-100 shadow-[0_0_24px_rgba(251,191,36,0.18)]',
+      className: 'border-fuchsia-300/55 text-fuchsia-100 shadow-[0_0_26px_rgba(217,70,239,0.2)]',
     },
     {
       id: 'card_total_solved',
       label: 'Solved',
       value: `${totalCorrect}`,
       icon: Activity,
-      className: 'border-fuchsia-300/50 text-fuchsia-100 shadow-[0_0_24px_rgba(217,70,239,0.18)]',
+      className: 'border-blue-300/55 text-blue-100 shadow-[0_0_26px_rgba(59,130,246,0.22)]',
     },
   ];
 
@@ -200,12 +205,17 @@ export const Stats: React.FC<StatsProps> = ({ onBack, onStartGame }) => {
           <CardEnergy className="-left-24 bottom-[-70px]" />
           <img src={fx.goldSparkBurst} alt="" aria-hidden="true" className="pointer-events-none absolute -right-20 -top-16 h-56 w-56 opacity-24 mix-blend-screen" />
           <div className="relative z-10 grid grid-cols-[96px_1fr] items-center gap-4 sm:grid-cols-[128px_1fr]">
-            <div className="relative grid h-28 place-items-center sm:h-36">
-              <div className="absolute bottom-1 h-14 w-24 rounded-full border border-cyan-300/25 bg-cyan-400/12 shadow-[0_0_30px_rgba(34,211,238,0.24)]" />
-              <img src={mascots.headAvatar} alt="Pi-bot avatar" className="relative z-10 h-24 w-24 object-contain sm:h-32 sm:w-32" />
+            <div className="relative grid h-32 place-items-center sm:h-40">
+              <div className="absolute left-1/2 top-2 h-[108px] w-[108px] -translate-x-1/2 rounded-[2rem] border border-cyan-200/42 bg-cyan-300/10 shadow-[0_0_34px_rgba(34,211,238,0.26),inset_0_1px_0_rgba(255,255,255,0.12)] sm:top-3 sm:h-32 sm:w-32" />
+              <div className="absolute left-1/2 top-[76px] h-12 w-24 -translate-x-1/2 rounded-full border border-amber-300/22 bg-amber-300/10 shadow-[0_0_28px_rgba(251,191,36,0.22)] sm:top-[98px] sm:h-14 sm:w-32" />
+              <img
+                src={mascots.headAvatar}
+                alt="Pi-bot avatar"
+                className="relative z-10 h-[108px] w-[108px] -translate-y-2 object-contain drop-shadow-[0_18px_26px_rgba(34,211,238,0.3)] sm:h-32 sm:w-32 sm:-translate-y-2"
+              />
             </div>
             <div className="min-w-0">
-              <p className={`${labelClass} text-cyan-300`}>Training profile</p>
+              <p className={`${labelClass} text-cyan-300`}>Progress dashboard</p>
               <h2 className="mt-1 text-[42px] font-black leading-none tracking-tight text-white sm:text-5xl">Level 1</h2>
               <div className="mt-4 flex items-center gap-3">
                 <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-800/90">

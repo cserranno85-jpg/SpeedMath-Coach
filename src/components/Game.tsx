@@ -19,6 +19,8 @@ const assetPanelStyle = (asset: string, overlay = 'rgba(8, 13, 32, 0.78)'): Reac
   backgroundSize: 'cover',
 });
 
+const numberKeys = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
 export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
   const [timeLeft, setTimeLeft] = useState(settings.gameDurationSeconds);
   const [score, setScore] = useState(0);
@@ -39,6 +41,10 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
   const [freezeTimeRemaining, setFreezeTimeRemaining] = useState(0);
   
   const questionStartTimeRef = useRef(Date.now());
+  const isEndingRef = useRef(false);
+  const isAdvancingRef = useRef(false);
+  const wrongLockedRef = useRef(false);
+  const nextProblemTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Achievement unlocks are tracked live but displayed only after active gameplay ends.
   const savedProgressRef = useRef<any[]>([]);
@@ -55,6 +61,19 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
   useEffect(() => { totalSubmissionsRef.current = totalSubmissions; }, [totalSubmissions]);
   useEffect(() => { historyRef.current = history; }, [history]);
   useEffect(() => { streakRef.current = streak; }, [streak]);
+
+  useEffect(() => {
+    isEndingRef.current = false;
+    isAdvancingRef.current = false;
+    wrongLockedRef.current = false;
+
+    return () => {
+      isEndingRef.current = true;
+      if (nextProblemTimeoutRef.current) {
+        clearTimeout(nextProblemTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Load initial progress and find previously unlocked badges
   useEffect(() => {
@@ -85,13 +104,24 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
   useEffect(() => {
     setCurrentProblem(generateProblem(currentDifficulty, settings.operations));
     questionStartTimeRef.current = Date.now();
+    isAdvancingRef.current = false;
+    wrongLockedRef.current = false;
   }, [currentDifficulty, settings.operations]);
+
+  const completeRound = useCallback(() => {
+    if (isEndingRef.current) return;
+    isEndingRef.current = true;
+    if (nextProblemTimeoutRef.current) {
+      clearTimeout(nextProblemTimeoutRef.current);
+    }
+    onEndGame(scoreRef.current, totalSubmissionsRef.current, historyRef.current, roundUnlockedBadgesRef.current);
+  }, [onEndGame]);
 
   // Timer countdown
   useEffect(() => {
     if (settings.gameMode === GameMode.UNTIMED) return;
     if (timeLeft <= 0) {
-      onEndGame(score, totalSubmissions, history, roundUnlockedBadgesRef.current);
+      completeRound();
       return;
     }
     const timer = setInterval(() => {
@@ -102,9 +132,12 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
           return freeze - 1;
         } else {
           setTimeLeft(prev => {
-             const nextVal = prev - 1;
+             const nextVal = Math.max(0, prev - 1);
              if (nextVal > 0 && nextVal <= 10) {
                 sounds.playCountdownTick(nextVal);
+             }
+             if (nextVal === 0) {
+                completeRound();
              }
              return nextVal;
           });
@@ -113,9 +146,12 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [timeLeft, onEndGame, score, totalSubmissions, history, settings.gameMode]);
+  }, [completeRound, settings.gameMode, timeLeft]);
 
   const handleCorrectAnswer = useCallback((timeSpentParam?: number) => {
+    if (!currentProblem || isAdvancingRef.current || isEndingRef.current) return;
+    isAdvancingRef.current = true;
+    wrongLockedRef.current = false;
     setFeedback('correct');
     sounds.playCorrect();
     
@@ -196,23 +232,30 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
     }
 
     // Almost immediate next question
-    setTimeout(() => {
+    if (nextProblemTimeoutRef.current) {
+       clearTimeout(nextProblemTimeoutRef.current);
+    }
+    nextProblemTimeoutRef.current = setTimeout(() => {
+       if (isEndingRef.current) return;
        setCurrentDifficulty(nextDifficulty);
        setCurrentProblem(generateProblem(nextDifficulty, settings.operations));
        setProblemIndex(i => i + 1);
        setInputValue('');
        setFeedback(null);
        questionStartTimeRef.current = Date.now();
+       isAdvancingRef.current = false;
     }, 50); // extremely fast swipe delay
   }, [currentDifficulty, currentProblem, settings]);
 
   const handleDigit = useCallback((digit: string) => {
-     if (!currentProblem || feedback === 'correct') return; // ignore if transitioning
+     if (!currentProblem || feedback === 'correct' || isAdvancingRef.current || isEndingRef.current) return;
+     if (wrongLockedRef.current && feedback !== 'incorrect') return;
 
      let baseStr = inputValue;
      if (feedback === 'incorrect') {
          baseStr = ''; // start fresh on new digit if they were wrong
          setFeedback(null);
+         wrongLockedRef.current = false;
      }
      
      const newValue = baseStr + digit;
@@ -225,6 +268,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
          const ts = (Date.now() - questionStartTimeRef.current) / 1000;
          handleCorrectAnswer(ts);
      } else if (!correctAnswerStr.startsWith(newValue)) {
+         wrongLockedRef.current = true;
          setFeedback('incorrect');
          sounds.playIncorrect();
          setTotalSubmissions(t => t + 1);
@@ -240,6 +284,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
       if (feedback === 'incorrect') {
           setInputValue('');
           setFeedback(null);
+          wrongLockedRef.current = false;
       } else {
           setInputValue(prev => prev.slice(0, -1));
       }
@@ -250,6 +295,8 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
       setStreak(0);
       setInputValue('');
       setFeedback(null);
+      isAdvancingRef.current = false;
+      wrongLockedRef.current = false;
       setCurrentProblem(generateProblem(currentDifficulty, settings.operations));
       setProblemIndex(i => i + 1);
       questionStartTimeRef.current = Date.now();
@@ -266,6 +313,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
 
   const activateHint = useCallback(() => {
      if (!currentProblem || hintsLeft <= 0) return;
+     if (isAdvancingRef.current || isEndingRef.current) return;
      
      sounds.playHint();
      const correctAnswerStr = currentProblem.correctAnswer.toString();
@@ -334,7 +382,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
        
        {/* Highly Visually Prominent Top Dashboard Layout */}
        <div
-         className="absolute left-3 right-3 top-3 z-20 mx-auto flex max-w-[430px] items-center justify-between gap-2 rounded-[1.45rem] border border-cyan-200/35 bg-slate-950/86 px-2.5 py-2 text-white shadow-[0_14px_34px_rgba(8,47,73,0.36),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl md:left-[5%] md:right-[5%] md:max-w-3xl md:px-4 md:py-2.5"
+         className="absolute left-3 right-3 top-3 z-20 mx-auto flex max-w-[430px] items-center justify-between gap-2 rounded-[1.45rem] border border-cyan-200/35 bg-slate-950/88 px-2.5 py-2 text-white shadow-[0_10px_26px_rgba(8,47,73,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-sm md:left-[5%] md:right-[5%] md:max-w-3xl md:px-4 md:py-2.5"
          style={assetPanelStyle(panels.navbarGlow, 'rgba(10, 17, 38, 0.82)')}
        >
           
@@ -408,7 +456,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
                animate={{ opacity: 1, scale: 1, y: 0 }}
                exit={{ opacity: 0, scale: 1.1, y: -20 }}
                transition={{ duration: 0.15 }}
-               className="flex flex-col items-center justify-center mb-3 md:mb-5 relative w-full max-w-3xl rounded-[1.75rem] border border-cyan-200/40 shadow-[0_18px_50px_rgba(8,47,73,0.38)] px-3 py-3 md:px-8 md:py-6 overflow-hidden backdrop-blur"
+               className="flex flex-col items-center justify-center mb-3 md:mb-5 relative w-full max-w-3xl rounded-[1.75rem] border border-cyan-200/40 shadow-[0_12px_34px_rgba(8,47,73,0.32)] px-3 py-3 md:px-8 md:py-6 overflow-hidden"
                style={assetPanelStyle(panels.exerciseCard, 'rgba(6, 12, 32, 0.86)')}
              >
                 <img src={fx.mathParticles} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-15 mix-blend-screen pointer-events-none" />
@@ -437,7 +485,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
            {/* Power-up HUD */}
            <div className="w-full max-w-[320px] sm:max-w-sm flex flex-col items-center">
               {/* Power-up Actions Panel */}
-              <div className="w-full bg-slate-950/88 border border-cyan-200/35 p-2 rounded-2xl flex gap-2 shadow-[0_12px_30px_rgba(8,47,73,0.32)] mb-3 md:p-2.5 md:gap-2.5 md:mb-3" style={assetPanelStyle(panels.cosmicCard, 'rgba(10, 17, 38, 0.84)')}>
+              <div className="w-full bg-slate-950/90 border border-cyan-200/35 p-2 rounded-2xl flex gap-2 shadow-[0_8px_22px_rgba(8,47,73,0.26)] mb-3 md:p-2.5 md:gap-2.5 md:mb-3" style={assetPanelStyle(panels.cosmicCard, 'rgba(10, 17, 38, 0.84)')}>
                  <button
                     onClick={activateFreezeTime}
                     disabled={settings.gameMode === GameMode.UNTIMED || freezesLeft <= 0 || freezeTimeRemaining > 0}
@@ -489,24 +537,24 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
                </AnimatePresence>
 
                <div className="grid grid-cols-3 gap-2.5 md:gap-3">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+                  {numberKeys.map(num => (
                      <button
                         key={num}
                         onClick={() => handleDigit(num.toString())}
-                        className="bg-slate-950/90 hover:bg-cyan-950/95 hover:scale-[1.02] active:scale-95 text-cyan-50 border border-cyan-200/45 text-2xl md:text-4xl font-black aspect-square rounded-2xl md:rounded-[1.6rem] flex items-center justify-center shadow-[0_10px_24px_rgba(8,47,73,0.32)] cursor-pointer transition-all backdrop-blur"
+                        className="bg-slate-950/92 hover:bg-cyan-950/95 active:scale-95 text-cyan-50 border border-cyan-200/45 text-2xl md:text-4xl font-black aspect-square rounded-2xl md:rounded-[1.6rem] flex items-center justify-center shadow-[0_7px_16px_rgba(8,47,73,0.28)] cursor-pointer transition-transform duration-75"
                      >
                         {num}
                      </button>
                   ))}
                   
                   {/* Empty cell or dot ? We don't have decimals. */}
-                  <div className="bg-slate-950/90 rounded-2xl md:rounded-[1.6rem] border border-amber-300/45 flex items-center justify-center overflow-hidden p-1 shadow-[0_10px_24px_rgba(251,191,36,0.13)] relative backdrop-blur">
+                  <div className="bg-slate-950/92 rounded-2xl md:rounded-[1.6rem] border border-amber-300/45 flex items-center justify-center overflow-hidden p-1 shadow-[0_7px_16px_rgba(251,191,36,0.12)] relative">
                     <img src={mascots.headAvatar} alt="Pi-bot" className={`w-full h-full object-contain rounded-xl transition-all duration-150 animate-float-pibot ${feedback === 'correct' ? 'scale-[1.15] rotate-6 animate-none' : feedback === 'incorrect' ? 'scale-90 saturate-50 opacity-55 animate-none' : 'scale-100 hover:scale-105'}`} />
                   </div>
                   
                   <button
                      onClick={() => handleDigit('0')}
-                     className="bg-slate-950/90 hover:bg-cyan-950 active:bg-cyan-900 text-cyan-50 border border-cyan-200/45 text-2xl md:text-3xl font-black aspect-square rounded-2xl md:rounded-[1.6rem] flex items-center justify-center transition-colors shadow-[0_10px_24px_rgba(8,47,73,0.32)]"
+                     className="bg-slate-950/92 hover:bg-cyan-950 active:bg-cyan-900 text-cyan-50 border border-cyan-200/45 text-2xl md:text-3xl font-black aspect-square rounded-2xl md:rounded-[1.6rem] flex items-center justify-center transition-colors shadow-[0_7px_16px_rgba(8,47,73,0.28)]"
                   >
                      0
                   </button>

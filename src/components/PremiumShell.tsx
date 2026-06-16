@@ -26,7 +26,7 @@ export const premiumPanelStyle = (
 export const labelClass = 'text-[10px] font-black uppercase tracking-[0.22em]';
 
 export const premiumGlassClass =
-  'relative overflow-hidden rounded-[1.75rem] border border-cyan-200/30 bg-slate-950/78 text-white shadow-[0_18px_48px_rgba(8,47,73,0.32),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl';
+  'relative overflow-hidden rounded-[1.75rem] border border-cyan-200/32 bg-slate-950/80 text-white shadow-[0_18px_48px_rgba(8,47,73,0.3),0_0_24px_rgba(34,211,238,0.08),inset_0_1px_0_rgba(255,255,255,0.09)] backdrop-blur-md';
 
 export const PremiumGlassClass = premiumGlassClass;
 
@@ -48,7 +48,7 @@ export const PremiumTopBar: React.FC<PremiumTopBarProps> = ({
   muted = false,
 }) => (
   <header
-    className="relative z-20 flex items-center gap-3 rounded-[1.7rem] border border-cyan-200/25 bg-slate-950/72 px-3.5 py-3 text-white shadow-[0_14px_40px_rgba(3,12,35,0.56),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl"
+    className="relative z-20 flex items-center gap-3 rounded-[1.7rem] border border-cyan-200/28 bg-slate-950/76 px-3.5 py-3 text-white shadow-[0_14px_36px_rgba(3,12,35,0.52),0_0_22px_rgba(34,211,238,0.09),inset_0_1px_0_rgba(255,255,255,0.09)] backdrop-blur-md"
     style={premiumPanelStyle(panels.navbarGlow, 'rgba(7, 13, 34, 0.8)')}
   >
     <div className="pointer-events-none absolute -left-10 -top-12 h-28 w-28 rounded-full bg-cyan-400/18 blur-2xl" />
@@ -71,7 +71,7 @@ export const PremiumTopBar: React.FC<PremiumTopBarProps> = ({
         type="button"
         onClick={onPrimaryAction}
         title={primaryTitle}
-        className="grid h-[54px] w-[54px] place-items-center rounded-[1.35rem] border border-indigo-200/35 bg-indigo-400/12 text-cyan-50 shadow-[0_0_22px_rgba(99,102,241,0.25),inset_0_1px_0_rgba(255,255,255,0.1)] transition active:scale-95"
+        className="grid h-[54px] w-[54px] place-items-center rounded-[1.35rem] border border-indigo-200/38 bg-indigo-400/14 text-cyan-50 shadow-[0_0_22px_rgba(99,102,241,0.24),inset_0_1px_0_rgba(255,255,255,0.12)] transition-transform duration-100 active:scale-95"
       >
         <WandSparkles className={`h-6 w-6 ${muted ? 'text-rose-200' : 'text-cyan-50'}`} />
       </button>
@@ -79,7 +79,7 @@ export const PremiumTopBar: React.FC<PremiumTopBarProps> = ({
         type="button"
         onClick={onSecondaryAction}
         title={secondaryTitle}
-        className="flex h-[54px] items-center gap-2 rounded-[1.35rem] border border-amber-200/40 bg-amber-300/10 px-4 text-amber-100 shadow-[0_0_22px_rgba(251,191,36,0.18),inset_0_1px_0_rgba(255,255,255,0.1)] transition active:scale-95"
+        className="flex h-[54px] items-center gap-2 rounded-[1.35rem] border border-amber-200/44 bg-amber-300/12 px-4 text-amber-100 shadow-[0_0_24px_rgba(251,191,36,0.2),inset_0_1px_0_rgba(255,255,255,0.12)] transition-transform duration-100 active:scale-95"
       >
         <Bolt className="h-5 w-5 fill-amber-300 text-amber-300" />
         <span className="text-xl font-black tracking-wide">L1</span>
@@ -115,7 +115,7 @@ export const PremiumCTA: React.FC<PremiumCTAProps> = ({ children, onClick, icon:
     id={id}
     type="button"
     onClick={onClick}
-    className="relative flex min-h-[64px] w-full items-center justify-center gap-3 overflow-hidden rounded-full border border-cyan-100/70 bg-cyan-300 px-6 text-sm font-black uppercase tracking-[0.18em] text-slate-950 shadow-[0_0_34px_rgba(34,211,238,0.45),0_14px_36px_rgba(37,99,235,0.34),inset_0_1px_0_rgba(255,255,255,0.45)] transition hover:brightness-110 active:scale-[0.98]"
+    className="relative flex min-h-[64px] w-full items-center justify-center gap-3 overflow-hidden rounded-full border border-cyan-100/70 bg-cyan-300 px-6 text-sm font-black uppercase tracking-[0.18em] text-slate-950 shadow-[0_0_32px_rgba(34,211,238,0.42),0_12px_30px_rgba(37,99,235,0.32),inset_0_1px_0_rgba(255,255,255,0.45)] transition-transform duration-100 hover:brightness-110 active:scale-[0.98]"
     style={{
       backgroundImage: `linear-gradient(90deg, rgba(103,232,249,0.98), rgba(14,165,233,0.98) 46%, rgba(37,99,235,0.98)), url(${buttonGlows.primary})`,
       backgroundSize: 'cover',
@@ -149,7 +149,7 @@ export const PremiumBottomNav: React.FC<PremiumBottomNavProps> = ({ active, onSe
     aria-label="Primary navigation"
   >
     <div
-      className="relative grid grid-cols-5 gap-1 overflow-hidden rounded-[1.55rem] border border-cyan-200/22 bg-slate-950/86 p-1.5 text-white shadow-[0_-10px_34px_rgba(8,47,73,0.25),0_16px_44px_rgba(2,6,23,0.7),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl"
+      className="relative grid grid-cols-5 gap-1 overflow-hidden rounded-[1.55rem] border border-cyan-200/24 bg-slate-950/88 p-1.5 text-white shadow-[0_-8px_26px_rgba(8,47,73,0.22),0_14px_38px_rgba(2,6,23,0.68),inset_0_1px_0_rgba(255,255,255,0.09)] backdrop-blur-md"
       style={premiumPanelStyle(panels.navbarGlow, 'rgba(5, 10, 29, 0.84)')}
     >
       <img src={fx.mathParticles} alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-[0.08] mix-blend-screen" />
@@ -160,9 +160,9 @@ export const PremiumBottomNav: React.FC<PremiumBottomNavProps> = ({ active, onSe
             key={key}
             type="button"
             onClick={() => onSelect(key)}
-            className={`relative z-10 flex h-[70px] min-w-0 flex-col items-center justify-center gap-1 rounded-[1.25rem] text-[10px] font-black transition active:scale-95 ${
+            className={`relative z-10 flex h-[68px] min-w-0 flex-col items-center justify-center gap-1 rounded-[1.25rem] text-[10px] font-black transition-transform duration-100 active:scale-95 ${
               isActive
-                ? 'border border-cyan-200/50 bg-cyan-400/18 text-cyan-50 shadow-[0_0_24px_rgba(34,211,238,0.42),inset_0_0_18px_rgba(14,165,233,0.18)]'
+                ? 'border border-cyan-100/58 bg-cyan-300/20 text-cyan-50 shadow-[0_0_24px_rgba(34,211,238,0.4),0_0_16px_rgba(167,139,250,0.14),inset_0_0_18px_rgba(14,165,233,0.18)]'
                 : 'text-cyan-100/58 hover:text-cyan-50'
             }`}
           >

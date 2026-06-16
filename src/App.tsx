@@ -4,11 +4,14 @@ import { Menu } from './components/Menu';
 import { Game } from './components/Game';
 import { GameOver } from './components/GameOver';
 import { Stats } from './components/Stats';
+import { Profile } from './components/Profile';
+import { Challenges } from './components/Challenges';
 import { motion, AnimatePresence } from 'motion/react';
 import { Badge } from './utils/streakAndAchievements';
 import { backgrounds, fx } from './assets/uiAssetRegistry';
+import { sounds } from './utils/soundEngine';
 
-type AppState = 'MENU' | 'PLAYING' | 'GAMEOVER' | 'STATS';
+type AppState = 'HOME' | 'PRACTICE' | 'PLAYING' | 'GAMEOVER' | 'PROGRESS' | 'PROFILE' | 'CHALLENGES';
 
 const DEFAULT_SETTINGS: Settings = {
   difficulty: Difficulty.BEGINNER,
@@ -24,7 +27,7 @@ const DEFAULT_SETTINGS: Settings = {
 };
 
 export default function App() {
-  const [appState, setAppState] = useState<AppState>('MENU');
+  const [appState, setAppState] = useState<AppState>('HOME');
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   
   // Game results
@@ -38,21 +41,32 @@ export default function App() {
     const savedSettings = localStorage.getItem('speedMathSettings');
     if (savedSettings) {
       try {
-        setSettings(JSON.parse(savedSettings));
+        const parsed = JSON.parse(savedSettings);
+        if (parsed?.difficulty && parsed?.gameMode && parsed?.operations) {
+          setSettings({ ...DEFAULT_SETTINGS, ...parsed, operations: { ...DEFAULT_SETTINGS.operations, ...parsed.operations } });
+        }
       } catch(e) {}
     }
   }, []);
 
   const handleSettingsChange = (newSettings: Settings) => {
-    // Ensure at least one operation is selected
-    const hasOp = Object.values(newSettings.operations).some(v => v);
-    if (!hasOp) newSettings.operations[Operation.ADDITION] = true;
+    const nextSettings = {
+      ...newSettings,
+      operations: { ...newSettings.operations },
+    };
+    const hasOp = Object.values(nextSettings.operations).some(v => v);
+    if (!hasOp) nextSettings.operations[Operation.ADDITION] = true;
 
-    setSettings(newSettings);
-    localStorage.setItem('speedMathSettings', JSON.stringify(newSettings));
+    setSettings(nextSettings);
+    localStorage.setItem('speedMathSettings', JSON.stringify(nextSettings));
+  };
+
+  const navigateTo = (state: Exclude<AppState, 'PLAYING' | 'GAMEOVER'>) => {
+    setAppState(state);
   };
 
   const handleStartGame = () => {
+    sounds.playStart();
     setAppState('PLAYING');
   };
 
@@ -65,9 +79,12 @@ export default function App() {
 
     // Here you could also save history to localStorage for long-term progress tracking
     const existingProgressStr = localStorage.getItem('speedMathProgress');
-    let progress = [];
+    let progress: any[] = [];
     if (existingProgressStr) {
-      try { progress = JSON.parse(existingProgressStr); } catch(e){}
+      try {
+        const parsed = JSON.parse(existingProgressStr);
+        progress = Array.isArray(parsed) ? parsed : [];
+      } catch(e){}
     }
     progress.push({
       date: new Date().toISOString(),
@@ -80,9 +97,9 @@ export default function App() {
   };
 
   const screenBackground =
-    appState === 'PLAYING'
+    appState === 'PLAYING' || appState === 'PRACTICE'
       ? backgrounds.exercise
-      : appState === 'STATS'
+      : appState === 'PROGRESS' || appState === 'PROFILE' || appState === 'CHALLENGES'
       ? backgrounds.profile
       : backgrounds.home;
   const isExerciseScreen = appState === 'PLAYING';
@@ -108,20 +125,22 @@ export default function App() {
        
        <div className="relative z-10 w-full flex items-start justify-center">
           <AnimatePresence mode="wait">
-             {appState === 'MENU' && (
+             {(appState === 'HOME' || appState === 'PRACTICE') && (
                  <motion.div
-                   key="menu"
+                   key={appState.toLowerCase()}
                    initial={{ opacity: 0, y: 30 }}
                    animate={{ opacity: 1, y: 0 }}
                    exit={{ opacity: 0, y: -20 }}
-                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                   transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                    className="w-full flex justify-center"
                  >
                     <Menu 
                       settings={settings} 
                       onSettingsChange={handleSettingsChange}
                       onStartGame={handleStartGame}
-                      onViewStats={() => setAppState('STATS')}
+                      onNavigate={navigateTo}
+                      initialTab={appState === 'PRACTICE' ? 'SETTINGS' : 'DASHBOARD'}
+                      activeNav={appState === 'PRACTICE' ? 'practice' : 'home'}
                     />
                  </motion.div>
              )}
@@ -132,13 +151,13 @@ export default function App() {
                    initial={{ opacity: 0, scale: 0.96, y: 15 }}
                    animate={{ opacity: 1, scale: 1, y: 0 }}
                    exit={{ opacity: 0, scale: 0.96, y: -15 }}
-                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                    className="w-full flex justify-center"
                  >
                     <Game 
                       settings={settings}
                       onEndGame={handleEndGame}
-                      onHome={() => setAppState('MENU')}
+                      onHome={() => navigateTo('HOME')}
                     />
                  </motion.div>
              )}
@@ -149,7 +168,7 @@ export default function App() {
                    initial={{ opacity: 0, y: 30 }}
                    animate={{ opacity: 1, y: 0 }}
                    exit={{ opacity: 0, y: -20 }}
-                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                   transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
                    className="w-full flex justify-center"
                  >
                     <GameOver 
@@ -158,21 +177,47 @@ export default function App() {
                       history={lastHistory}
                       unlockedBadges={lastUnlockedBadges}
                       onPlayAgain={handleStartGame}
-                      onMenu={() => setAppState('MENU')}
+                      onMenu={() => navigateTo('PRACTICE')}
                     />
                  </motion.div>
              )}
 
-             {appState === 'STATS' && (
+             {appState === 'PROGRESS' && (
                  <motion.div
-                   key="stats"
+                   key="progress"
                    initial={{ opacity: 0, y: 30 }}
                    animate={{ opacity: 1, y: 0 }}
                    exit={{ opacity: 0, y: -20 }}
-                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                   transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                    className="w-full flex justify-center"
                  >
-                    <Stats onBack={() => setAppState('MENU')} onStartGame={handleStartGame} />
+                    <Stats onBack={() => navigateTo('HOME')} onStartGame={handleStartGame} onNavigate={navigateTo} />
+                 </motion.div>
+             )}
+
+             {appState === 'PROFILE' && (
+                 <motion.div
+                   key="profile"
+                   initial={{ opacity: 0, y: 30 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   exit={{ opacity: 0, y: -20 }}
+                   transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                   className="w-full flex justify-center"
+                 >
+                    <Profile onStartGame={handleStartGame} onNavigate={navigateTo} />
+                 </motion.div>
+             )}
+
+             {appState === 'CHALLENGES' && (
+                 <motion.div
+                   key="challenges"
+                   initial={{ opacity: 0, y: 30 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   exit={{ opacity: 0, y: -20 }}
+                   transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                   className="w-full flex justify-center"
+                 >
+                    <Challenges onStartGame={handleStartGame} onNavigate={navigateTo} />
                  </motion.div>
              )}
           </AnimatePresence>
