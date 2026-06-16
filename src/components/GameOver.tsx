@@ -41,12 +41,12 @@ export const GameOver: React.FC<GameOverProps> = ({ score, totalQuestions, histo
     if (accuracy >= 80 && score > 0) {
       sounds.playAchievement();
     } else if (score > 0) {
-      sounds.playCorrect();
+      sounds.playGameOver();
     } else {
       sounds.playIncorrect();
     }
 
-  }, []);
+  }, [accuracy, score]);
 
   const getReactiveMascotMessage = () => {
     if (accuracy === 100 && score > 0) {

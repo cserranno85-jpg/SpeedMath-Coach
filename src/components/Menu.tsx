@@ -5,6 +5,7 @@ import {
   Gauge,
   Gem,
   Play,
+  SlidersHorizontal,
   Sparkles,
   Target,
   Zap,
@@ -39,7 +40,9 @@ interface MenuProps {
   settings: SettingsType;
   onSettingsChange: (newSettings: SettingsType) => void;
   onStartGame: () => void;
-  onViewStats: () => void;
+  onNavigate?: (state: 'HOME' | 'PRACTICE' | 'PROGRESS' | 'PROFILE' | 'CHALLENGES') => void;
+  initialTab?: 'DASHBOARD' | 'SETTINGS';
+  activeNav?: PremiumNavKey;
 }
 
 const modeIconByMode: Record<GameMode, string> = {
@@ -50,13 +53,20 @@ const modeIconByMode: Record<GameMode, string> = {
 const settingPanelClass =
   'relative overflow-hidden rounded-[1.35rem] border border-cyan-100/16 bg-slate-950/48 p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]';
 
-export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartGame, onViewStats }) => {
+export const Menu: React.FC<MenuProps> = ({
+  settings,
+  onSettingsChange,
+  onStartGame,
+  onNavigate,
+  initialTab = 'DASHBOARD',
+  activeNav,
+}) => {
   const [streak, setStreak] = useState(0);
   const [badges, setBadges] = useState<Badge[]>([]);
   const [totalSolves, setTotalSolves] = useState(0);
   const [accuracy, setAccuracy] = useState(0);
   const [muted, setMuted] = useState(sounds.getMutedStatus());
-  const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'SETTINGS'>('DASHBOARD');
+  const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'SETTINGS'>(initialTab);
   const [highScore, setHighScore] = useState(0);
   const [totalSessions, setTotalSessions] = useState(0);
 
@@ -68,6 +78,10 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
       sounds.playClick();
     }
   };
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   useEffect(() => {
     const raw = localStorage.getItem('speedMathProgress');
@@ -112,17 +126,21 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
   const levelProgress = Math.min(100, totalSolves % 100 || (totalSolves > 0 ? 100 : 0));
   const selectedOperations = Object.values(Operation).filter((op) => settings.operations[op]);
 
-  const navActive: PremiumNavKey = activeTab === 'SETTINGS' ? 'challenges' : 'home';
+  const navActive: PremiumNavKey = activeNav ?? (activeTab === 'SETTINGS' ? 'practice' : 'home');
   const handleNavSelect = (key: PremiumNavKey) => {
     sounds.playClick();
     if (key === 'home') {
+      onNavigate?.('HOME');
       setActiveTab('DASHBOARD');
     } else if (key === 'practice') {
-      onStartGame();
-    } else if (key === 'progress' || key === 'profile') {
-      onViewStats();
-    } else if (key === 'challenges') {
+      onNavigate?.('PRACTICE');
       setActiveTab('SETTINGS');
+    } else if (key === 'progress') {
+      onNavigate?.('PROGRESS');
+    } else if (key === 'profile') {
+      onNavigate?.('PROFILE');
+    } else if (key === 'challenges') {
+      onNavigate?.('CHALLENGES');
     }
   };
 
@@ -170,6 +188,7 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
           onPrimaryAction={handleToggleMute}
           onSecondaryAction={() => {
             sounds.playClick();
+            onNavigate?.('PRACTICE');
             setActiveTab('SETTINGS');
           }}
           primaryTitle={muted ? 'Unmute audio' : 'Mute audio'}
@@ -192,7 +211,8 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
               />
               <div className="relative z-10 grid min-h-[218px] grid-cols-[42%_1fr] items-center gap-3">
                 <div className="relative flex h-full items-end justify-center">
-                  <div className="absolute bottom-3 h-20 w-36 rounded-full border border-amber-300/30 bg-amber-300/10 blur-[1px] shadow-[0_0_34px_rgba(251,191,36,0.34)]" />
+                  <div className="absolute bottom-4 h-28 w-28 rounded-[2rem] border border-cyan-200/55 bg-cyan-300/10 shadow-[0_0_34px_rgba(34,211,238,0.32),0_0_22px_rgba(251,191,36,0.18),inset_0_1px_0_rgba(255,255,255,0.16)]" />
+                  <div className="absolute bottom-2 h-20 w-36 rounded-full border border-amber-300/24 bg-amber-300/10 shadow-[0_0_34px_rgba(251,191,36,0.28)]" />
                   <img
                     src={mascots.headAvatar}
                     alt="Pi-bot avatar"
@@ -212,19 +232,11 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
                     </div>
                     <span className="font-mono text-sm font-black text-cyan-50">{levelProgress}/100</span>
                   </div>
-                  <div className="mt-5 rounded-[1.15rem] border border-cyan-100/14 bg-slate-950/38 p-2.5">
-                    <p className={`${labelClass} mb-2 text-cyan-100/45`}>Choose avatar</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="grid h-16 place-items-center rounded-2xl border border-cyan-200/70 bg-cyan-300/16 shadow-[0_0_20px_rgba(34,211,238,0.28)]">
-                        <img src={mascots.headAvatar} alt="" aria-hidden="true" className="h-12 w-12 object-contain" />
-                      </div>
-                      <div className="grid h-16 place-items-center rounded-2xl border border-amber-200/40 bg-amber-300/14">
-                        <img src={brandMarks.primaryLogo} alt="" aria-hidden="true" className="h-12 w-12 object-contain" />
-                      </div>
-                      <div className="grid h-16 place-items-center rounded-2xl border border-blue-200/35 bg-blue-400/12 text-blue-100">
-                        <Zap className="h-9 w-9 stroke-[2.5]" />
-                      </div>
-                    </div>
+                  <div className="mt-5 rounded-[1.15rem] border border-cyan-100/16 bg-slate-950/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+                    <p className={`${labelClass} text-cyan-100/50`}>Pi-bot synced</p>
+                    <p className="mt-1 text-xs font-semibold leading-snug text-cyan-50/62">
+                      Robot head avatar active for this coach profile.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -265,7 +277,7 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
                   type="button"
                   onClick={() => {
                     sounds.playClick();
-                    onViewStats();
+                    onNavigate?.('PROGRESS');
                   }}
                   className="text-xs font-bold text-cyan-200"
                 >
@@ -277,7 +289,7 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
                   type="button"
                   onClick={() => {
                     sounds.playClick();
-                    onViewStats();
+                    onNavigate?.('PROGRESS');
                   }}
                   className="relative z-10 flex w-full items-center gap-4 rounded-[1.35rem] border border-cyan-200/22 bg-blue-950/34 p-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
                 >
@@ -322,11 +334,10 @@ export const Menu: React.FC<MenuProps> = ({ settings, onSettingsChange, onStartG
             <CardEnergy className="-right-24 -top-24" />
             <div className="relative z-10 flex items-center justify-between gap-3 border-b border-cyan-100/12 pb-4">
               <div className="flex min-w-0 items-center gap-3">
-                <img
-                  src={brandMarks.primaryLogo}
-                  alt="SpeedMath Coach logo"
-                  className="h-12 w-12 shrink-0 rounded-2xl object-contain shadow-[0_0_18px_rgba(251,191,36,0.22)] ring-1 ring-amber-100/35"
-                />
+                <div className="relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl border border-cyan-200/40 bg-cyan-300/12 text-cyan-100 shadow-[0_0_22px_rgba(34,211,238,0.24),0_0_18px_rgba(251,191,36,0.1),inset_0_1px_0_rgba(255,255,255,0.12)]">
+                  <div className="absolute inset-1 rounded-[1rem] border border-cyan-100/12 bg-slate-950/44" />
+                  <SlidersHorizontal className="relative z-10 h-6 w-6 stroke-[2.5] drop-shadow-[0_0_10px_rgba(34,211,238,0.55)]" />
+                </div>
                 <div className="min-w-0">
                   <p className={`${labelClass} text-cyan-300`}>Rules & setup</p>
                   <h3 className="truncate text-xl font-black tracking-tight text-white">Session Calibration</h3>
