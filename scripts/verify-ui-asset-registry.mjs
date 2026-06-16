@@ -36,6 +36,7 @@ const requiredWiredAssetFiles = [
   'icon-untimed-practice.png',
   'speedmath-icon-foreground.png',
   'speedmath-icon-safe-area-1024.png',
+  'speedmath-app-icon-v2-source.png',
   'badge-accuracy-90.png',
   'badge-first-solve.png',
   'badge-focus-master.png',
@@ -108,12 +109,12 @@ if (!fs.existsSync(registryPath)) {
     }
   }
 
-  if (!registry.includes('primaryLogo: speedmathIconSafeArea')) {
-    fail('brandMarks.primaryLogo must use speedmath-icon-safe-area-1024.png.');
+  if (!registry.includes('primaryLogo: speedmathAppIconV2')) {
+    fail('brandMarks.primaryLogo must use speedmath-app-icon-v2-source.png.');
   }
 
-  if (!registry.includes('appIcon: speedmathIconSafeArea')) {
-    fail('brandMarks.appIcon must use speedmath-icon-safe-area-1024.png.');
+  if (!registry.includes('appIcon: speedmathAppIconV2')) {
+    fail('brandMarks.appIcon must use speedmath-app-icon-v2-source.png.');
   }
 
   if (registry.includes('primaryLogo: speedmathIconForeground') || registry.includes('appIcon: speedmathIconForeground')) {

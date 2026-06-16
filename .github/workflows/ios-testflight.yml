@@ -150,7 +150,7 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
-            CURRENT_PROJECT_VERSION=5 \
+            CURRENT_PROJECT_VERSION=6 \
             MARKETING_VERSION=1.1.1 \
             clean archive
 
@@ -168,7 +168,7 @@ jobs:
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SpeedMathCoach-iOS-v1.1.1-build5
+          name: SpeedMathCoach-iOS-v1.1.1-build6
           path: build/export/*.ipa
           if-no-files-found: error
 
