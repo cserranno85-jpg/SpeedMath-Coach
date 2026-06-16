@@ -14,7 +14,7 @@ interface GameProps {
 }
 
 const assetPanelStyle = (asset: string, overlay = 'rgba(8, 13, 32, 0.78)'): React.CSSProperties => ({
-  backgroundImage: `linear-gradient(135deg, ${overlay}, rgba(2, 6, 23, 0.9)), url(${asset})`,
+  backgroundImage: `linear-gradient(135deg, ${overlay}, rgba(2, 8, 31, 0.96)), url(${asset})`,
   backgroundPosition: 'center',
   backgroundSize: 'cover',
 });
@@ -378,12 +378,12 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
       : challengeIcons.untimed;
 
   return (
-    <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[100dvh] max-h-[100dvh] relative px-4 select-none overflow-hidden">
+    <div className="gameplay-safe-root w-full max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[100dvh] max-h-[100dvh] relative px-4 select-none overflow-hidden">
        
        {/* Highly Visually Prominent Top Dashboard Layout */}
        <div
-         className="absolute left-3 right-3 top-3 z-20 mx-auto flex max-w-[430px] items-center justify-between gap-2 rounded-[1.45rem] border border-cyan-200/35 bg-slate-950/88 px-2.5 py-2 text-white shadow-[0_10px_26px_rgba(8,47,73,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-sm md:left-[5%] md:right-[5%] md:max-w-3xl md:px-4 md:py-2.5"
-         style={assetPanelStyle(panels.navbarGlow, 'rgba(10, 17, 38, 0.82)')}
+         className="gameplay-hud-safe premium-card-depth absolute left-3 right-3 z-20 mx-auto flex max-w-[430px] items-center justify-between gap-2 rounded-[1.45rem] border border-cyan-200/38 bg-[#02081f]/92 px-2.5 py-2 text-white shadow-[0_10px_26px_rgba(8,47,73,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-sm md:left-[5%] md:right-[5%] md:max-w-3xl md:px-4 md:py-2.5"
+         style={assetPanelStyle(panels.navbarGlow, 'rgba(3, 12, 38, 0.88)')}
        >
           
           {/* Left Block: Brand Mark, Score and Streak Badge */}
@@ -434,7 +434,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
           </div>
           <button 
              onClick={() => { sounds.playClick(); onHome(); }}
-             className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-cyan-100 bg-cyan-300 px-2.5 py-2 text-[10px] font-black uppercase tracking-widest text-slate-950 shadow-[0_0_16px_rgba(34,211,238,0.28)] transition-all hover:bg-cyan-200 active:scale-95 md:px-3"
+             className="premium-action-pill flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-cyan-100 bg-cyan-300 px-2.5 py-2 text-[10px] font-black uppercase tracking-widest text-slate-950 shadow-[0_0_16px_rgba(34,211,238,0.28)] hover:bg-cyan-200 md:px-3"
           >
              <Home className="w-3.5 h-3.5" />
              <span className="hidden sm:inline font-bold">Home</span>
@@ -442,8 +442,8 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
        </div>
 
        {/* Main Page Layout */}
-       <div className="w-full flex-1 flex flex-col items-center justify-center mt-[4.5rem] md:mt-[5.5rem] pb-2">
-           <div className="flex items-center gap-2 rounded-full border border-cyan-100/18 bg-slate-950/55 px-3 py-1.5 text-[10px] font-black text-cyan-100/74 uppercase tracking-widest mb-2 md:mb-3">
+       <div className="gameplay-main-stack w-full flex-1 flex flex-col items-center justify-center pb-1">
+           <div className="flex items-center gap-2 rounded-full border border-cyan-100/18 bg-[#02081f]/68 px-3 py-1.5 text-[10px] font-black text-cyan-100/74 uppercase tracking-widest shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
               <img src={currentOperationIcon} alt="" aria-hidden="true" className="w-7 h-7 object-contain drop-shadow-[0_0_10px_rgba(34,211,238,0.3)]" />
               <span>Level {currentDifficulty}</span>
            </div>
@@ -456,11 +456,11 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
                animate={{ opacity: 1, scale: 1, y: 0 }}
                exit={{ opacity: 0, scale: 1.1, y: -20 }}
                transition={{ duration: 0.15 }}
-               className="flex flex-col items-center justify-center mb-3 md:mb-5 relative w-full max-w-3xl rounded-[1.75rem] border border-cyan-200/40 shadow-[0_12px_34px_rgba(8,47,73,0.32)] px-3 py-3 md:px-8 md:py-6 overflow-hidden"
-               style={assetPanelStyle(panels.exerciseCard, 'rgba(6, 12, 32, 0.86)')}
+               className="gameplay-equation-card premium-card-depth flex flex-col items-center justify-center relative w-full max-w-3xl rounded-[1.75rem] border border-cyan-200/42 shadow-[0_12px_34px_rgba(8,47,73,0.32)] px-3 md:px-8 overflow-hidden"
+               style={assetPanelStyle(panels.exerciseCard, 'rgba(3, 12, 38, 0.88)')}
              >
                 <img src={fx.mathParticles} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-15 mix-blend-screen pointer-events-none" />
-                <div className="text-5xl sm:text-7xl md:text-[116px] font-black text-white tracking-tight flex items-center gap-2 sm:gap-4 md:gap-7 z-10 my-1 md:my-3 leading-none font-sans drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
+                <div className="text-5xl sm:text-7xl md:text-[116px] font-black text-white tracking-tight flex items-center gap-2 sm:gap-4 md:gap-7 z-10 my-1 leading-none font-sans drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
                    <span>{currentProblem.num1}</span>
                    <span className="text-cyan-300 font-light">{getOperationSymbol(currentProblem.operation)}</span>
                    <span>{currentProblem.num2}</span>
@@ -485,11 +485,11 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
            {/* Power-up HUD */}
            <div className="w-full max-w-[320px] sm:max-w-sm flex flex-col items-center">
               {/* Power-up Actions Panel */}
-              <div className="w-full bg-slate-950/90 border border-cyan-200/35 p-2 rounded-2xl flex gap-2 shadow-[0_8px_22px_rgba(8,47,73,0.26)] mb-3 md:p-2.5 md:gap-2.5 md:mb-3" style={assetPanelStyle(panels.cosmicCard, 'rgba(10, 17, 38, 0.84)')}>
+              <div className="premium-card-depth w-full bg-[#02081f]/92 border border-cyan-200/35 p-2 rounded-2xl flex gap-2 shadow-[0_8px_22px_rgba(8,47,73,0.26)] md:p-2.5 md:gap-2.5" style={assetPanelStyle(panels.cosmicCard, 'rgba(3, 12, 38, 0.88)')}>
                  <button
                     onClick={activateFreezeTime}
                     disabled={settings.gameMode === GameMode.UNTIMED || freezesLeft <= 0 || freezeTimeRemaining > 0}
-                    className={`flex-1 py-2.5 px-2 rounded-xl flex items-center justify-center gap-1.5 transition-all text-[11px] font-extrabold tracking-wider uppercase cursor-pointer select-none active:scale-95 md:py-3 md:px-3 ${
+                    className={`premium-toggle-3d flex-1 py-2.5 px-2 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-extrabold tracking-wider uppercase cursor-pointer select-none md:py-3 md:px-3 ${
                        settings.gameMode === GameMode.UNTIMED ? 'opacity-30 cursor-not-allowed' :
                        freezeTimeRemaining > 0 ? 'bg-cyan-300/22 text-cyan-50 border border-cyan-200/70 animate-pulse shadow-[0_0_18px_rgba(34,211,238,0.22)]' :
                        freezesLeft > 0 ? 'bg-cyan-300/12 border border-cyan-200/40 text-cyan-50 hover:bg-cyan-300/18' :
@@ -504,7 +504,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
                  <button
                     onClick={activateHint}
                     disabled={hintsLeft <= 0}
-                    className={`flex-1 py-2.5 px-2 rounded-xl flex items-center justify-center gap-1.5 transition-all text-[11px] font-extrabold tracking-wider uppercase cursor-pointer select-none active:scale-95 md:py-3 md:px-3 ${
+                    className={`premium-toggle-3d flex-1 py-2.5 px-2 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-extrabold tracking-wider uppercase cursor-pointer select-none md:py-3 md:px-3 ${
                        hintsLeft > 0 ? 'bg-amber-300/14 border border-amber-200/45 text-amber-100 hover:bg-amber-300/20' :
                        'bg-slate-900/70 border border-slate-700 text-slate-500'
                     }`}
@@ -517,7 +517,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
            </div>
 
            {/* Number Pad Container */}
-           <div className="w-full max-w-[320px] sm:max-w-sm mt-1 md:mt-2">
+           <div className="w-full max-w-[320px] sm:max-w-sm">
                <AnimatePresence>
                   {feedback === 'incorrect' && (
                      <motion.div 
@@ -528,7 +528,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
                      >
                         <button 
                            onClick={onSkip}
-                           className="flex items-center gap-2 bg-rose-500/16 hover:bg-rose-500/22 border border-rose-300/50 text-rose-100 px-6 py-3 rounded-xl font-bold tracking-widest uppercase text-xs transition-colors w-full justify-center"
+                           className="premium-toggle-3d flex items-center gap-2 bg-rose-500/16 hover:bg-rose-500/22 border border-rose-300/50 text-rose-100 px-6 py-3 rounded-xl font-bold tracking-widest uppercase text-xs w-full justify-center"
                         >
                            <XCircle className="w-4 h-4" /> Skip Question
                         </button>
@@ -536,32 +536,32 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
                   )}
                </AnimatePresence>
 
-               <div className="grid grid-cols-3 gap-2.5 md:gap-3">
+               <div className="gameplay-keypad-grid grid grid-cols-3">
                   {numberKeys.map(num => (
                      <button
                         key={num}
                         onClick={() => handleDigit(num.toString())}
-                        className="bg-slate-950/92 hover:bg-cyan-950/95 active:scale-95 text-cyan-50 border border-cyan-200/45 text-2xl md:text-4xl font-black aspect-square rounded-2xl md:rounded-[1.6rem] flex items-center justify-center shadow-[0_7px_16px_rgba(8,47,73,0.28)] cursor-pointer transition-transform duration-75"
+                        className="premium-key-3d hover:bg-cyan-950/95 text-cyan-50 border border-cyan-200/48 text-2xl md:text-4xl font-black aspect-square rounded-2xl md:rounded-[1.6rem] flex items-center justify-center cursor-pointer"
                      >
                         {num}
                      </button>
                   ))}
                   
                   {/* Empty cell or dot ? We don't have decimals. */}
-                  <div className="bg-slate-950/92 rounded-2xl md:rounded-[1.6rem] border border-amber-300/45 flex items-center justify-center overflow-hidden p-1 shadow-[0_7px_16px_rgba(251,191,36,0.12)] relative">
+                  <div className="premium-key-3d rounded-2xl md:rounded-[1.6rem] border border-amber-300/45 flex items-center justify-center overflow-hidden p-1 relative">
                     <img src={mascots.headAvatar} alt="Pi-bot" className={`w-full h-full object-contain rounded-xl transition-all duration-150 animate-float-pibot ${feedback === 'correct' ? 'scale-[1.15] rotate-6 animate-none' : feedback === 'incorrect' ? 'scale-90 saturate-50 opacity-55 animate-none' : 'scale-100 hover:scale-105'}`} />
                   </div>
                   
                   <button
                      onClick={() => handleDigit('0')}
-                     className="bg-slate-950/92 hover:bg-cyan-950 active:bg-cyan-900 text-cyan-50 border border-cyan-200/45 text-2xl md:text-3xl font-black aspect-square rounded-2xl md:rounded-[1.6rem] flex items-center justify-center transition-colors shadow-[0_7px_16px_rgba(8,47,73,0.28)]"
+                     className="premium-key-3d hover:bg-cyan-950 active:bg-cyan-900 text-cyan-50 border border-cyan-200/48 text-2xl md:text-3xl font-black aspect-square rounded-2xl md:rounded-[1.6rem] flex items-center justify-center"
                   >
                      0
                   </button>
 
                   <button
                      onClick={handleBackspace}
-                     className="keypad-delete-btn text-white aspect-square rounded-2xl md:rounded-[1.6rem] flex items-center justify-center transform active:translate-y-0.5 cursor-pointer shadow-red-200 shadow-sm"
+                     className="keypad-delete-btn premium-key-3d text-white aspect-square rounded-2xl md:rounded-[1.6rem] flex items-center justify-center cursor-pointer"
                   >
                      <Delete className="w-6 h-6 md:w-8 md:h-8" />
                   </button>

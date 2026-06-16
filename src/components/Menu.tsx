@@ -51,7 +51,7 @@ const modeIconByMode: Record<GameMode, string> = {
 };
 
 const settingPanelClass =
-  'relative overflow-hidden rounded-[1.35rem] border border-cyan-100/16 bg-slate-950/48 p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]';
+  'premium-card-depth relative overflow-hidden rounded-[1.35rem] border border-cyan-100/18 bg-[#03102f]/62 p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]';
 
 export const Menu: React.FC<MenuProps> = ({
   settings,
@@ -210,14 +210,16 @@ export const Menu: React.FC<MenuProps> = ({
                 className="pointer-events-none absolute -right-20 -top-16 h-56 w-56 opacity-28 mix-blend-screen"
               />
               <div className="relative z-10 grid min-h-[218px] grid-cols-[42%_1fr] items-center gap-3">
-                <div className="relative flex h-full items-end justify-center">
-                  <div className="absolute bottom-4 h-28 w-28 rounded-[2rem] border border-cyan-200/55 bg-cyan-300/10 shadow-[0_0_34px_rgba(34,211,238,0.32),0_0_22px_rgba(251,191,36,0.18),inset_0_1px_0_rgba(255,255,255,0.16)]" />
-                  <div className="absolute bottom-2 h-20 w-36 rounded-full border border-amber-300/24 bg-amber-300/10 shadow-[0_0_34px_rgba(251,191,36,0.28)]" />
-                  <img
-                    src={mascots.headAvatar}
-                    alt="Pi-bot avatar"
-                    className="relative z-10 h-[150px] w-full object-contain drop-shadow-[0_22px_30px_rgba(34,211,238,0.34)]"
-                  />
+                <div className="relative flex h-full items-center justify-center pt-1">
+                  <div className="relative grid h-[142px] w-[142px] place-items-center rounded-[2.15rem] border border-cyan-200/58 bg-cyan-300/11 shadow-[0_0_38px_rgba(34,211,238,0.34),0_0_24px_rgba(251,191,36,0.2),inset_0_1px_0_rgba(255,255,255,0.18),inset_0_-14px_26px_rgba(2,8,31,0.32)]">
+                    <div className="absolute inset-3 rounded-[1.7rem] border border-amber-200/20 bg-[#02081f]/38" />
+                    <div className="absolute -bottom-4 left-1/2 h-16 w-32 -translate-x-1/2 rounded-full border border-amber-300/24 bg-amber-300/10 shadow-[0_0_34px_rgba(251,191,36,0.28)]" />
+                    <img
+                      src={mascots.headAvatar}
+                      alt="Pi-bot avatar"
+                      className="relative z-10 h-[122px] w-[122px] -translate-y-1 object-contain drop-shadow-[0_20px_28px_rgba(34,211,238,0.34)]"
+                    />
+                  </div>
                 </div>
 
                 <div className="min-w-0 py-2">
@@ -365,10 +367,10 @@ export const Menu: React.FC<MenuProps> = ({
                         sounds.playClick();
                         onSettingsChange({ ...settings, gameMode: mode });
                       }}
-                      className={`flex min-h-[58px] items-center justify-center gap-2 rounded-2xl border px-3 text-xs font-black transition active:scale-95 ${
+                      className={`premium-toggle-3d flex min-h-[58px] items-center justify-center gap-2 rounded-2xl border px-3 text-xs font-black ${
                         settings.gameMode === mode
-                          ? 'border-cyan-100 bg-cyan-300 text-slate-950 shadow-[0_0_22px_rgba(34,211,238,0.34)]'
-                          : 'border-cyan-100/15 bg-slate-950/52 text-cyan-100/62'
+                          ? 'premium-selected-glow border-cyan-100 bg-cyan-300 text-slate-950 shadow-[0_0_22px_rgba(34,211,238,0.34)]'
+                          : 'border-cyan-100/15 bg-[#02081f]/68 text-cyan-100/62'
                       }`}
                     >
                       <img src={icon} alt="" aria-hidden="true" className="h-7 w-7 object-contain" />
@@ -387,10 +389,10 @@ export const Menu: React.FC<MenuProps> = ({
                   {Object.values(Operation).map((op) => (
                     <label
                       key={op}
-                      className={`flex min-h-[58px] cursor-pointer select-none items-center gap-2.5 rounded-2xl border px-3 text-xs font-black transition ${
+                      className={`premium-toggle-3d flex min-h-[58px] cursor-pointer select-none items-center gap-2.5 rounded-2xl border px-3 text-xs font-black ${
                         settings.operations[op]
-                          ? 'border-cyan-200/55 bg-cyan-300/14 text-cyan-50 shadow-[0_0_16px_rgba(34,211,238,0.12)]'
-                          : 'border-cyan-100/15 bg-slate-950/52 text-cyan-100/55'
+                          ? 'premium-selected-glow border-cyan-200/55 bg-cyan-300/14 text-cyan-50 shadow-[0_0_16px_rgba(34,211,238,0.12)]'
+                          : 'border-cyan-100/15 bg-[#02081f]/68 text-cyan-100/55'
                       }`}
                     >
                       <input
@@ -421,10 +423,10 @@ export const Menu: React.FC<MenuProps> = ({
                         sounds.playClick();
                         onSettingsChange({ ...settings, difficulty: diff });
                       }}
-                      className={`rounded-xl border px-3 py-2.5 text-xs font-black transition active:scale-95 ${
+                      className={`premium-toggle-3d rounded-xl border px-3 py-2.5 text-xs font-black ${
                         settings.difficulty === diff
-                          ? 'border-violet-100 bg-violet-300 text-slate-950 shadow-[0_0_18px_rgba(167,139,250,0.28)]'
-                          : 'border-cyan-100/15 bg-slate-950/52 text-cyan-100/60'
+                          ? 'premium-selected-glow border-violet-100 bg-violet-300 text-slate-950 shadow-[0_0_18px_rgba(167,139,250,0.28)]'
+                          : 'border-cyan-100/15 bg-[#02081f]/68 text-cyan-100/60'
                       }`}
                     >
                       {diff}
@@ -433,7 +435,7 @@ export const Menu: React.FC<MenuProps> = ({
                 </div>
               </section>
 
-              <label className="flex cursor-pointer select-none items-start justify-between gap-4 rounded-[1.35rem] border border-cyan-100/15 bg-slate-950/48 p-4">
+              <label className="premium-toggle-3d flex cursor-pointer select-none items-start justify-between gap-4 rounded-[1.35rem] border border-cyan-100/15 bg-[#02081f]/62 p-4">
                 <div>
                   <div className="flex items-center gap-2 text-xs font-black text-cyan-50">
                     <Sparkles className="h-3.5 w-3.5 text-cyan-300" />
@@ -468,10 +470,10 @@ export const Menu: React.FC<MenuProps> = ({
                           sounds.playClick();
                           onSettingsChange({ ...settings, gameDurationSeconds: time });
                         }}
-                        className={`rounded-xl border px-2 py-2.5 text-xs font-black transition active:scale-95 ${
+                        className={`premium-toggle-3d rounded-xl border px-2 py-2.5 text-xs font-black ${
                           settings.gameDurationSeconds === time
-                            ? 'border-cyan-100 bg-cyan-300 text-slate-950 shadow-[0_0_16px_rgba(34,211,238,0.28)]'
-                            : 'border-cyan-100/15 bg-slate-950/52 text-cyan-100/60'
+                            ? 'premium-selected-glow border-cyan-100 bg-cyan-300 text-slate-950 shadow-[0_0_16px_rgba(34,211,238,0.28)]'
+                            : 'border-cyan-100/15 bg-[#02081f]/68 text-cyan-100/60'
                         }`}
                       >
                         {time < 60 ? `${time}s` : `${time / 60}m`}
@@ -503,7 +505,7 @@ export const Menu: React.FC<MenuProps> = ({
                     sounds.playClick();
                     setActiveTab('DASHBOARD');
                   }}
-                  className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl border border-cyan-100 bg-cyan-300 px-4 text-xs font-black uppercase tracking-widest text-slate-950 shadow-[0_0_22px_rgba(34,211,238,0.24)] active:scale-95"
+                  className="premium-3d-button flex min-h-[58px] items-center justify-center gap-2 rounded-2xl border border-cyan-100 bg-cyan-300 px-4 text-xs font-black uppercase tracking-widest text-slate-950 shadow-[0_0_22px_rgba(34,211,238,0.24)]"
                 >
                   <Check className="h-4 w-4 stroke-[2.5]" />
                   Apply
@@ -515,7 +517,7 @@ export const Menu: React.FC<MenuProps> = ({
                     sounds.playClick();
                     onStartGame();
                   }}
-                  className="flex min-h-[58px] items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-300 px-4 text-xs font-black uppercase tracking-widest text-slate-950 shadow-[0_0_22px_rgba(251,191,36,0.24)] active:scale-95"
+                  className="premium-3d-button flex min-h-[58px] items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-300 px-4 text-xs font-black uppercase tracking-widest text-slate-950 shadow-[0_0_22px_rgba(251,191,36,0.24)]"
                 >
                   <Play className="h-[18px] w-[18px] fill-current" />
                   Play

@@ -106,21 +106,21 @@ export default function App() {
 
   return (
     <div
-      className={`min-h-[100dvh] w-full relative bg-slate-950 text-slate-900 font-sans tracking-tight flex justify-center selection:bg-cyan-200 overflow-x-hidden pb-safe pr-safe pl-safe pt-safe ${
+      className={`min-h-[100dvh] w-full relative bg-[#02081f] text-slate-900 font-sans tracking-tight flex justify-center selection:bg-cyan-200 overflow-x-hidden ${
         isExerciseScreen ? 'items-center overflow-hidden p-0' : 'items-start overflow-y-auto p-0'
       }`}
       style={{
-        backgroundImage: `linear-gradient(180deg, rgba(4, 8, 28, 0.18), rgba(4, 8, 28, 0.72)), url(${screenBackground})`,
+        backgroundImage: `radial-gradient(circle at 50% -12%, rgba(14, 165, 233, 0.22), transparent 42%), linear-gradient(180deg, rgba(2, 8, 31, 0.52), rgba(2, 8, 31, 0.88)), url(${screenBackground})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
     >
-       <div className="absolute inset-0 bg-[radial-gradient(#22d3ee_1px,transparent_1px)] [background-size:28px_28px] opacity-[0.08] pointer-events-none"></div>
+       <div className="absolute inset-0 bg-[radial-gradient(#22d3ee_1px,transparent_1px)] [background-size:28px_28px] opacity-[0.06] pointer-events-none"></div>
        <img
          src={fx.mathParticles}
          alt=""
          aria-hidden="true"
-         className="absolute inset-0 h-full w-full object-cover opacity-[0.14] mix-blend-screen pointer-events-none"
+         className="absolute inset-0 h-full w-full object-cover opacity-[0.11] mix-blend-screen pointer-events-none"
        />
        
        <div className="relative z-10 w-full flex items-start justify-center">

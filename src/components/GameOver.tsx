@@ -23,7 +23,7 @@ interface GameOverProps {
 }
 
 const modalPanelStyle = (asset: string, overlay = 'rgba(8, 13, 32, 0.84)'): React.CSSProperties => ({
-  backgroundImage: `linear-gradient(135deg, ${overlay}, rgba(2, 6, 23, 0.92)), url(${asset})`,
+  backgroundImage: `linear-gradient(135deg, ${overlay}, rgba(2, 8, 31, 0.96)), url(${asset})`,
   backgroundPosition: 'center',
   backgroundSize: 'cover',
 });
@@ -66,8 +66,12 @@ export const GameOver: React.FC<GameOverProps> = ({ score, totalQuestions, histo
        id="gameover_screen_root"
        initial={{ opacity: 0, y: 20 }}
        animate={{ opacity: 1, y: 0 }}
-       className="relative mx-auto w-full max-w-xl overflow-hidden rounded-[1.85rem] border border-cyan-300/45 bg-slate-950/88 p-5 text-white shadow-[0_20px_60px_rgba(8,47,73,0.42),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl md:p-8"
-       style={modalPanelStyle(panels.modalGlow)}
+       className="premium-card-depth relative mx-auto w-[calc(100%-28px)] max-w-xl overflow-hidden rounded-[1.85rem] border border-cyan-300/45 bg-[#02081f]/90 p-5 text-white shadow-[0_20px_60px_rgba(8,47,73,0.42),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl md:p-8"
+       style={{
+         ...modalPanelStyle(panels.modalGlow, 'rgba(3, 12, 38, 0.88)'),
+         marginTop: 'max(18px, calc(var(--safe-top) + 12px))',
+         marginBottom: 'max(18px, calc(var(--safe-bottom) + 18px))',
+       }}
     >
        <img src={fx.mathParticles} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-10 mix-blend-screen pointer-events-none" />
        <div className="relative z-10">
@@ -169,14 +173,14 @@ export const GameOver: React.FC<GameOverProps> = ({ score, totalQuestions, histo
             <button 
               id="btn_gameover_settings"
               onClick={() => { sounds.playClick(); onMenu(); }}
-              className="flex-1 py-4 bg-slate-950/75 hover:bg-slate-900 border border-cyan-100/20 text-cyan-100/70 hover:text-cyan-100 rounded-2xl font-bold text-xs tracking-widest uppercase flex items-center justify-center transition-all duration-150 transform active:scale-95 cursor-pointer shadow-sm"
+              className="premium-3d-button flex-1 py-4 bg-[#02081f]/78 hover:bg-slate-900 border border-cyan-100/20 text-cyan-100/70 hover:text-cyan-100 rounded-2xl font-bold text-xs tracking-widest uppercase flex items-center justify-center cursor-pointer shadow-sm"
             >
                Settings
             </button>
             <button 
               id="btn_gameover_playagain"
               onClick={() => { sounds.playClick(); onPlayAgain(); }}
-              className="flex-1 py-4 text-amber-950 rounded-2xl font-black text-xs tracking-widest uppercase flex items-center justify-center gap-2 transition-all duration-150 transform active:scale-95 cursor-pointer shadow-[0_0_22px_rgba(251,191,36,0.25)] border border-amber-100"
+              className="premium-3d-button flex-1 py-4 text-amber-950 rounded-2xl font-black text-xs tracking-widest uppercase flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_22px_rgba(251,191,36,0.25)] border border-amber-100"
               style={{
                 backgroundImage: `linear-gradient(180deg, rgba(251, 191, 36, 0.9), rgba(245, 158, 11, 0.95)), url(${buttonGlows.primary})`,
                 backgroundSize: 'cover',

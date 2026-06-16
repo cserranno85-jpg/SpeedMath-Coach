@@ -21,6 +21,7 @@ import iconUntimedPractice from './ui/icon-untimed-practice.png';
 
 import speedmathIconForeground from './ui/speedmath-icon-foreground.png';
 import speedmathIconSafeArea from './ui/speedmath-icon-safe-area-1024.png';
+import speedmathAppIconV2 from './ui/speedmath-app-icon-v2-source.png';
 
 import badgeAccuracy90 from './ui/badge-accuracy-90.png';
 import badgeFirstSolve from './ui/badge-first-solve.png';
@@ -74,9 +75,10 @@ export const challengeIcons = {
 } as const;
 
 export const brandMarks = {
-  primaryLogo: speedmathIconSafeArea,
-  appIcon: speedmathIconSafeArea,
-  emblem: speedmathIconSafeArea,
+  primaryLogo: speedmathAppIconV2,
+  appIcon: speedmathAppIconV2,
+  emblem: speedmathAppIconV2,
+  safeAreaLegacy: speedmathIconSafeArea,
   foreground: speedmathIconForeground,
 } as const;
 
