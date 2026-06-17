@@ -135,6 +135,23 @@ jobs:
           </plist>
           EOF
 
+      - name: Force and print iOS project version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          PBXPROJ="$PROJECT_PATH/project.pbxproj"
+
+          perl -0pi -e 's/CURRENT_PROJECT_VERSION = [^;]+;/CURRENT_PROJECT_VERSION = 7;/g' "$PBXPROJ"
+
+          if [ "$(LC_ALL=C head -c 3 "$PBXPROJ" | od -An -tx1 | tr -d " \n")" = "efbbbf" ]; then
+            echo "ERROR: $PBXPROJ has a UTF-8 BOM"
+            exit 1
+          fi
+
+          echo "Project versions before archive:"
+          grep -E "CURRENT_PROJECT_VERSION|MARKETING_VERSION" "$PBXPROJ" | sed 's/^[[:space:]]*//'
+
       - name: Archive iOS app
         run: |
           set -euo pipefail
@@ -150,8 +167,6 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
-            CURRENT_PROJECT_VERSION=6 \
-            MARKETING_VERSION=1.1.1 \
             clean archive
 
       - name: Export IPA
@@ -165,10 +180,56 @@ jobs:
 
           find "$EXPORT_PATH" -maxdepth 2 -type f -print
 
+      - name: Inspect exported IPA version
+        id: ipa_version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          IPA_PATH=$(find "$EXPORT_PATH" -name "*.ipa" -type f | head -n 1)
+
+          if [ -z "$IPA_PATH" ]; then
+            echo "No IPA found in $EXPORT_PATH"
+            exit 1
+          fi
+
+          INSPECT_DIR="$(mktemp -d)"
+          unzip -q "$IPA_PATH" -d "$INSPECT_DIR"
+
+          APP_PLIST=$(find "$INSPECT_DIR/Payload" -path "*.app/Info.plist" -type f | head -n 1)
+
+          if [ -z "$APP_PLIST" ]; then
+            echo "No Payload/*.app/Info.plist found in $IPA_PATH"
+            exit 1
+          fi
+
+          IPA_BUNDLE_IDENTIFIER=$(/usr/libexec/PlistBuddy -c "Print CFBundleIdentifier" "$APP_PLIST")
+          IPA_MARKETING_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP_PLIST")
+          IPA_BUNDLE_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$APP_PLIST")
+
+          echo "CFBundleIdentifier=$IPA_BUNDLE_IDENTIFIER"
+          echo "CFBundleShortVersionString=$IPA_MARKETING_VERSION"
+          echo "CFBundleVersion=$IPA_BUNDLE_VERSION"
+
+          if [ "$IPA_BUNDLE_VERSION" != "7" ]; then
+            echo "ERROR: Expected CFBundleVersion 7, got $IPA_BUNDLE_VERSION"
+            exit 1
+          fi
+
+          {
+            echo "IPA_MARKETING_VERSION=$IPA_MARKETING_VERSION"
+            echo "IPA_BUNDLE_VERSION=$IPA_BUNDLE_VERSION"
+          } >> "$GITHUB_ENV"
+
+          {
+            echo "marketing_version=$IPA_MARKETING_VERSION"
+            echo "bundle_version=$IPA_BUNDLE_VERSION"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SpeedMathCoach-iOS-v1.1.1-build6
+          name: SpeedMathCoach-iOS-v${{ steps.ipa_version.outputs.marketing_version }}-build${{ steps.ipa_version.outputs.bundle_version }}
           path: build/export/*.ipa
           if-no-files-found: error
 
