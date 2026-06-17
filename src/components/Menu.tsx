@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Check,
   Flame,
@@ -40,7 +40,7 @@ interface MenuProps {
   settings: SettingsType;
   onSettingsChange: (newSettings: SettingsType) => void;
   onStartGame: () => void;
-  onNavigate?: (state: 'HOME' | 'PRACTICE' | 'PROGRESS' | 'PROFILE' | 'CHALLENGES') => void;
+  onNavigate?: (state: 'HOME' | 'PRACTICE' | 'PROGRESS' | 'CHALLENGES') => void;
   initialTab?: 'DASHBOARD' | 'SETTINGS';
   activeNav?: PremiumNavKey;
 }
@@ -70,14 +70,13 @@ export const Menu: React.FC<MenuProps> = ({
   const [highScore, setHighScore] = useState(0);
   const [totalSessions, setTotalSessions] = useState(0);
 
-  const handleToggleMute = () => {
-    const nextVal = !muted;
+  const handleToggleMute = useCallback((nextVal = !muted) => {
     sounds.setMute(nextVal);
     setMuted(nextVal);
     if (!nextVal) {
       sounds.playClick();
     }
-  };
+  }, [muted]);
 
   useEffect(() => {
     setActiveTab(initialTab);
@@ -110,7 +109,7 @@ export const Menu: React.FC<MenuProps> = ({
     }
   }, []);
 
-  const toggleOperation = (op: Operation) => {
+  const toggleOperation = useCallback((op: Operation) => {
     sounds.playClick();
     onSettingsChange({
       ...settings,
@@ -119,15 +118,18 @@ export const Menu: React.FC<MenuProps> = ({
         [op]: !settings.operations[op],
       },
     });
-  };
+  }, [onSettingsChange, settings]);
 
-  const unlockedBadgesCount = badges.filter((badge) => badge.unlocked).length;
-  const featuredBadge = badges.find((badge) => badge.unlocked) ?? badges[0];
+  const unlockedBadgesCount = useMemo(() => badges.filter((badge) => badge.unlocked).length, [badges]);
+  const featuredBadge = useMemo(() => badges.find((badge) => badge.unlocked) ?? badges[0], [badges]);
   const levelProgress = Math.min(100, totalSolves % 100 || (totalSolves > 0 ? 100 : 0));
-  const selectedOperations = Object.values(Operation).filter((op) => settings.operations[op]);
+  const selectedOperations = useMemo(
+    () => Object.values(Operation).filter((op) => settings.operations[op]),
+    [settings.operations],
+  );
 
   const navActive: PremiumNavKey = activeNav ?? (activeTab === 'SETTINGS' ? 'practice' : 'home');
-  const handleNavSelect = (key: PremiumNavKey) => {
+  const handleNavSelect = useCallback((key: PremiumNavKey) => {
     sounds.playClick();
     if (key === 'home') {
       onNavigate?.('HOME');
@@ -137,14 +139,12 @@ export const Menu: React.FC<MenuProps> = ({
       setActiveTab('SETTINGS');
     } else if (key === 'progress') {
       onNavigate?.('PROGRESS');
-    } else if (key === 'profile') {
-      onNavigate?.('PROFILE');
     } else if (key === 'challenges') {
       onNavigate?.('CHALLENGES');
     }
-  };
+  }, [onNavigate]);
 
-  const statCards = [
+  const statCards = useMemo(() => [
     {
       label: 'Solved',
       value: `${totalSolves}`,
@@ -177,7 +177,7 @@ export const Menu: React.FC<MenuProps> = ({
       theme: 'border-fuchsia-300/55 bg-fuchsia-400/12 text-fuchsia-100 shadow-[0_0_26px_rgba(217,70,239,0.2)]',
       bubble: 'border-fuchsia-200/45 bg-fuchsia-400/18 text-fuchsia-100 shadow-[0_0_22px_rgba(217,70,239,0.34)]',
     },
-  ];
+  ], [accuracy, highScore, streak, totalSessions, totalSolves]);
 
   return (
     <>
@@ -198,7 +198,7 @@ export const Menu: React.FC<MenuProps> = ({
         {activeTab === 'DASHBOARD' ? (
           <section id="dashboard_tab_content" className="mt-4 flex flex-col gap-4">
             <div
-              id="profile_level_card"
+              id="home_level_card"
               className={`${PremiumGlassClass} min-h-[250px] border-blue-300/40 p-4 shadow-[0_18px_52px_rgba(29,78,216,0.24),0_0_34px_rgba(251,191,36,0.1),inset_0_1px_0_rgba(255,255,255,0.1)]`}
               style={premiumPanelStyle(panels.cosmicCard, 'rgba(7, 13, 34, 0.76)')}
             >
@@ -223,7 +223,7 @@ export const Menu: React.FC<MenuProps> = ({
                 </div>
 
                 <div className="min-w-0 py-2">
-                  <p className={`${labelClass} text-cyan-300`}>Player profile</p>
+                  <p className={`${labelClass} text-cyan-300`}>Training level</p>
                   <h2 className="mt-2 text-[46px] font-black leading-none tracking-tight text-white">Level 1</h2>
                   <div className="mt-5 flex items-center gap-3">
                     <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-800/90 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
@@ -237,7 +237,7 @@ export const Menu: React.FC<MenuProps> = ({
                   <div className="mt-5 rounded-[1.15rem] border border-cyan-100/16 bg-slate-950/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
                     <p className={`${labelClass} text-cyan-100/50`}>Pi-bot synced</p>
                     <p className="mt-1 text-xs font-semibold leading-snug text-cyan-50/62">
-                      Robot head avatar active for this coach profile.
+                      Robot head avatar active for this training dashboard.
                     </p>
                   </div>
                 </div>
@@ -251,7 +251,7 @@ export const Menu: React.FC<MenuProps> = ({
                   className={`${PremiumGlassClass} min-h-[142px] p-4 ${theme}`}
                   style={premiumPanelStyle(panels.statsCard, 'rgba(8, 17, 41, 0.72)')}
                 >
-                  <div className="absolute -right-8 -bottom-8 h-24 w-24 rounded-full bg-current opacity-[0.08] blur-xl" />
+                  <div className="absolute -right-8 -bottom-8 h-24 w-24 rounded-full bg-current opacity-[0.06]" />
                   <div className="relative z-10 flex h-full flex-col justify-between">
                     <div className="flex items-center justify-between gap-2">
                       <div className={`grid h-14 w-14 place-items-center rounded-full border ${bubble}`}>

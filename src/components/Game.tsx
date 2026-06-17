@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Settings, MathProblem, Difficulty, GameMode } from '../types';
 import { sounds } from '../utils/soundEngine';
-import { generateProblem, getOperationSymbol } from '../utils/mathGenerator';
+import { generateProblem, getNextAdaptiveDifficulty, getOperationSymbol } from '../utils/mathGenerator';
 import { XCircle, Delete, Home } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { evaluateAchievements, Badge } from '../utils/streakAndAchievements';
-import { brandMarks, challengeIcons, fx, mascots, operationIcons, panels } from '../assets/uiAssetRegistry';
+import { challengeIcons, fx, operationIcons, panels } from '../assets/uiAssetRegistry';
 
 interface GameProps {
   settings: Settings;
@@ -100,13 +100,14 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
     }
   }, []);
 
-  // Initialize first problem
+  // Initialize a new drill from the selected settings. Adaptive bumps manage their own next problem.
   useEffect(() => {
-    setCurrentProblem(generateProblem(currentDifficulty, settings.operations));
+    setCurrentDifficulty(settings.difficulty);
+    setCurrentProblem(generateProblem(settings.difficulty, settings.operations));
     questionStartTimeRef.current = Date.now();
     isAdvancingRef.current = false;
     wrongLockedRef.current = false;
-  }, [currentDifficulty, settings.operations]);
+  }, [settings.difficulty, settings.operations]);
 
   const completeRound = useCallback(() => {
     if (isEndingRef.current) return;
@@ -120,10 +121,6 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
   // Timer countdown
   useEffect(() => {
     if (settings.gameMode === GameMode.UNTIMED) return;
-    if (timeLeft <= 0) {
-      completeRound();
-      return;
-    }
     const timer = setInterval(() => {
       setFreezeTimeRemaining(freeze => {
         if (freeze > 0) {
@@ -146,7 +143,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [completeRound, settings.gameMode, timeLeft]);
+  }, [completeRound, settings.gameMode]);
 
   const handleCorrectAnswer = useCallback((timeSpentParam?: number) => {
     if (!currentProblem || isAdvancingRef.current || isEndingRef.current) return;
@@ -218,17 +215,14 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
     });
 
     // Progressive logic if enabled
-    let nextDifficulty = currentDifficulty;
-    if (settings.adaptiveDifficulty) {
-       if (nextStreak >= 3 && timeSpent < 5) {
-          // Increase difficulty
-          const diffs = Object.values(Difficulty);
-          const i = diffs.indexOf(currentDifficulty);
-          if (i !== -1 && i < diffs.length - 1) {
-              nextDifficulty = diffs[i + 1] as Difficulty;
-          }
-          setStreak(0); // reset streak after difficulty bump
-       }
+    const { nextDifficulty, shouldResetStreak } = getNextAdaptiveDifficulty({
+      adaptiveDifficulty: settings.adaptiveDifficulty,
+      currentDifficulty,
+      streak: nextStreak,
+      timeSpentSeconds: timeSpent,
+    });
+    if (shouldResetStreak) {
+      setStreak(0);
     }
 
     // Almost immediate next question
@@ -378,74 +372,59 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
       : challengeIcons.untimed;
 
   return (
-    <div className="gameplay-safe-root w-full max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[100dvh] max-h-[100dvh] relative px-4 select-none overflow-hidden">
+    <div className="gameplay-safe-root gameplay-viewport-lock w-full max-w-4xl mx-auto flex flex-col items-center justify-center relative px-4 select-none">
        
-       {/* Highly Visually Prominent Top Dashboard Layout */}
+       {/* Focused gameplay HUD */}
        <div
-         className="gameplay-hud-safe premium-card-depth absolute left-3 right-3 z-20 mx-auto flex max-w-[430px] items-center justify-between gap-2 rounded-[1.45rem] border border-cyan-200/38 bg-[#02081f]/92 px-2.5 py-2 text-white shadow-[0_10px_26px_rgba(8,47,73,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-sm md:left-[5%] md:right-[5%] md:max-w-3xl md:px-4 md:py-2.5"
+         className="mobile-light-glass gameplay-hud-safe premium-card-depth absolute left-3 right-3 z-20 mx-auto flex max-w-[430px] flex-col gap-2 rounded-[1.45rem] border border-cyan-200/34 bg-[#02081f]/92 px-3 py-2.5 text-white shadow-[0_10px_24px_rgba(8,47,73,0.24),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-sm md:left-[5%] md:right-[5%] md:max-w-3xl md:px-4"
          style={assetPanelStyle(panels.navbarGlow, 'rgba(3, 12, 38, 0.88)')}
        >
-          
-          {/* Left Block: Brand Mark, Score and Streak Badge */}
-          <div className="flex items-center gap-2 min-w-0">
-             <img
-               src={brandMarks.primaryLogo}
-               alt="SpeedMath Coach logo"
-               className="h-9 w-9 shrink-0 rounded-xl object-contain shadow-[0_0_18px_rgba(251,191,36,0.24)] ring-1 ring-amber-100/35 md:h-12 md:w-12"
-             />
-             <div className="flex flex-col rounded-2xl border border-cyan-100/15 bg-cyan-300/8 px-2.5 py-1.5 md:px-3 md:py-2">
-                <span className="text-[8px] uppercase tracking-widest text-cyan-100/52 font-extrabold leading-none mb-1">Score</span>
-                <span className="font-mono text-lg font-black leading-none text-cyan-50 md:text-2xl">{score}</span>
-             </div>
-             {streak > 0 && (
-                <div className="flex items-center gap-1 bg-amber-300/14 border border-amber-200/35 text-amber-100 px-2 py-1.5 rounded-xl text-xs font-black shrink-0" title={`${streak} consecutive correct answers`}>
-                   <span className="h-1.5 w-1.5 rounded-full bg-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.8)]"></span>
-                   <span className="font-mono">{streak}</span>
-                </div>
-              )}
+          <div className="flex w-full items-center justify-between gap-2">
+            <button
+               onClick={() => { sounds.playClick(); onHome(); }}
+               className="premium-action-pill flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-cyan-100 bg-cyan-300 px-2.5 py-2 text-[10px] font-black uppercase tracking-widest text-slate-950 shadow-[0_0_14px_rgba(34,211,238,0.22)] hover:bg-cyan-200 md:px-3"
+            >
+               <Home className="w-3.5 h-3.5" />
+               <span className="hidden sm:inline font-bold">Home</span>
+            </button>
+
+            <div className="flex min-w-0 items-center justify-end gap-2">
+               <div className="flex flex-col rounded-2xl border border-cyan-100/15 bg-cyan-300/8 px-3 py-1.5 text-right">
+                  <span className="mb-1 text-[8px] font-extrabold uppercase leading-none tracking-widest text-cyan-100/52">Score</span>
+                  <span className="font-mono text-xl font-black leading-none text-cyan-50 md:text-2xl">{score}</span>
+               </div>
+            </div>
           </div>
 
-          {/* Center Block: VERY noticeable Bigger & More Noticeable Clock */}
+          {/* Timer focal point */}
           {settings.gameMode === GameMode.TIMED && (
-             <div className="flex items-center justify-center shrink-0">
+             <div className="flex w-full items-center justify-center pt-0.5">
                 {freezeTimeRemaining > 0 ? (
-                   <div className="flex animate-pulse items-center gap-1.5 rounded-2xl border border-cyan-300/60 bg-cyan-300/18 px-2.5 py-1.5 text-cyan-50 shadow-[0_0_18px_rgba(6,182,212,0.32)] md:px-4 md:py-2">
-                      <img src={fx.cyanOrbGlow} alt="" aria-hidden="true" className="w-5 h-5 object-contain animate-spin" />
-                      <span className="font-mono text-xs font-black uppercase tracking-widest md:text-base">FROZEN {freezeTimeRemaining}s</span>
+                   <div className="flex items-center gap-2 rounded-2xl border border-cyan-300/60 bg-cyan-300/18 px-4 py-2 text-cyan-50 shadow-[0_0_14px_rgba(6,182,212,0.24)] md:px-5 md:py-2.5">
+                      <img src={fx.cyanOrbGlow} alt="" aria-hidden="true" className="h-5 w-5 object-contain" />
+                      <span className="font-mono text-base font-black uppercase tracking-widest md:text-xl">FROZEN {freezeTimeRemaining}s</span>
                    </div>
                 ) : (
-                   <div className={`flex items-center gap-1.5 rounded-2xl border px-2.5 py-1.5 transition-all duration-300 md:gap-3 md:px-5 md:py-2 ${
+                   <div className={`flex min-w-[172px] items-center justify-center gap-2 rounded-2xl border px-4 py-2 transition-colors duration-150 md:min-w-[220px] md:gap-3 md:px-6 md:py-2.5 ${
                       timeLeft <= 10 
-                        ? 'bg-rose-500/18 border-rose-300 shadow-[0_0_25px_rgba(244,63,94,0.42)] text-rose-100 animate-pulse'
+                        ? 'bg-rose-500/18 border-rose-300 shadow-[0_0_18px_rgba(244,63,94,0.3)] text-rose-100'
                         : 'bg-slate-950/82 border-amber-200/24 text-amber-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
                    }`}>
-                      <img src={currentModeIcon} alt="" aria-hidden="true" className={`h-5 w-5 object-contain md:h-7 md:w-7 ${timeLeft <= 10 ? 'animate-bounce' : ''}`} />
-                      <span className={`font-mono text-lg font-black tracking-widest md:text-3xl ${timeLeft <= 10 ? 'text-rose-100' : 'text-slate-100'}`}>
+                      <img src={currentModeIcon} alt="" aria-hidden="true" className="h-6 w-6 object-contain md:h-8 md:w-8" />
+                      <span className={`font-mono text-3xl font-black tracking-widest md:text-5xl ${timeLeft <= 10 ? 'text-rose-100' : 'text-slate-100'}`}>
                          {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
                       </span>
                    </div>
                 )}
              </div>
           )}
-
-          {/* Right Block: Home Button */}
-          <div className="hidden items-center gap-1 rounded-xl border border-amber-200/25 bg-amber-300/10 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-amber-100 min-[390px]:flex">
-             L1
-          </div>
-          <button 
-             onClick={() => { sounds.playClick(); onHome(); }}
-             className="premium-action-pill flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-cyan-100 bg-cyan-300 px-2.5 py-2 text-[10px] font-black uppercase tracking-widest text-slate-950 shadow-[0_0_16px_rgba(34,211,238,0.28)] hover:bg-cyan-200 md:px-3"
-          >
-             <Home className="w-3.5 h-3.5" />
-             <span className="hidden sm:inline font-bold">Home</span>
-          </button>
        </div>
 
        {/* Main Page Layout */}
        <div className="gameplay-main-stack w-full flex-1 flex flex-col items-center justify-center pb-1">
            <div className="flex items-center gap-2 rounded-full border border-cyan-100/18 bg-[#02081f]/68 px-3 py-1.5 text-[10px] font-black text-cyan-100/74 uppercase tracking-widest shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
               <img src={currentOperationIcon} alt="" aria-hidden="true" className="w-7 h-7 object-contain drop-shadow-[0_0_10px_rgba(34,211,238,0.3)]" />
-              <span>Level {currentDifficulty}</span>
+              <span className="capitalize">{currentProblem.operation.toLowerCase()}</span>
            </div>
            
            {/* Equation with fast swipe animation */}
@@ -491,7 +470,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
                     disabled={settings.gameMode === GameMode.UNTIMED || freezesLeft <= 0 || freezeTimeRemaining > 0}
                     className={`premium-toggle-3d flex-1 py-2.5 px-2 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-extrabold tracking-wider uppercase cursor-pointer select-none md:py-3 md:px-3 ${
                        settings.gameMode === GameMode.UNTIMED ? 'opacity-30 cursor-not-allowed' :
-                       freezeTimeRemaining > 0 ? 'bg-cyan-300/22 text-cyan-50 border border-cyan-200/70 animate-pulse shadow-[0_0_18px_rgba(34,211,238,0.22)]' :
+                       freezeTimeRemaining > 0 ? 'bg-cyan-300/22 text-cyan-50 border border-cyan-200/70 shadow-[0_0_14px_rgba(34,211,238,0.18)]' :
                        freezesLeft > 0 ? 'bg-cyan-300/12 border border-cyan-200/40 text-cyan-50 hover:bg-cyan-300/18' :
                        'bg-slate-900/70 border border-slate-700 text-slate-500'
                     }`}
@@ -547,10 +526,7 @@ export const Game: React.FC<GameProps> = ({ settings, onEndGame, onHome }) => {
                      </button>
                   ))}
                   
-                  {/* Empty cell or dot ? We don't have decimals. */}
-                  <div className="premium-key-3d rounded-2xl md:rounded-[1.6rem] border border-amber-300/45 flex items-center justify-center overflow-hidden p-1 relative">
-                    <img src={mascots.headAvatar} alt="Pi-bot" className={`w-full h-full object-contain rounded-xl transition-all duration-150 animate-float-pibot ${feedback === 'correct' ? 'scale-[1.15] rotate-6 animate-none' : feedback === 'incorrect' ? 'scale-90 saturate-50 opacity-55 animate-none' : 'scale-100 hover:scale-105'}`} />
-                  </div>
+                  <div className="keypad-blank-tile aspect-square rounded-2xl border border-cyan-100/16 bg-slate-950/46 md:rounded-[1.6rem]" aria-hidden="true" />
                   
                   <button
                      onClick={() => handleDigit('0')}

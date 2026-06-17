@@ -14,6 +14,7 @@
     "open:ios": "npx cap open ios",
     "doctor": "npx cap doctor",
     "verify:mobile": "node scripts/verify-mobile-readiness.mjs",
+    "verify:questions": "node scripts/verify-question-generation.mjs",
     "generate:icons": "npx @capacitor/assets generate",
     "lint": "tsc --noEmit",
     "generate:brand-assets": "node scripts/generate-speedmath-assets.mjs"

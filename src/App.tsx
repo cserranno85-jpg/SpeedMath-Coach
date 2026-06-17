@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Settings, Difficulty, Operation, GameMode } from './types';
 import { Menu } from './components/Menu';
 import { Game } from './components/Game';
 import { GameOver } from './components/GameOver';
 import { Stats } from './components/Stats';
-import { Profile } from './components/Profile';
 import { Challenges } from './components/Challenges';
 import { motion, AnimatePresence } from 'motion/react';
 import { Badge } from './utils/streakAndAchievements';
 import { backgrounds, fx } from './assets/uiAssetRegistry';
 import { sounds } from './utils/soundEngine';
 
-type AppState = 'HOME' | 'PRACTICE' | 'PLAYING' | 'GAMEOVER' | 'PROGRESS' | 'PROFILE' | 'CHALLENGES';
+type AppSection = 'HOME' | 'PRACTICE' | 'PROGRESS' | 'CHALLENGES';
+type AppState = AppSection | 'PLAYING' | 'GAMEOVER';
 
 const DEFAULT_SETTINGS: Settings = {
   difficulty: Difficulty.BEGINNER,
@@ -49,7 +49,7 @@ export default function App() {
     }
   }, []);
 
-  const handleSettingsChange = (newSettings: Settings) => {
+  const handleSettingsChange = useCallback((newSettings: Settings) => {
     const nextSettings = {
       ...newSettings,
       operations: { ...newSettings.operations },
@@ -59,18 +59,18 @@ export default function App() {
 
     setSettings(nextSettings);
     localStorage.setItem('speedMathSettings', JSON.stringify(nextSettings));
-  };
+  }, []);
 
-  const navigateTo = (state: Exclude<AppState, 'PLAYING' | 'GAMEOVER'>) => {
+  const navigateTo = useCallback((state: AppSection) => {
     setAppState(state);
-  };
+  }, []);
 
-  const handleStartGame = () => {
+  const handleStartGame = useCallback(() => {
     sounds.playStart();
     setAppState('PLAYING');
-  };
+  }, []);
 
-  const handleEndGame = (score: number, totalSubmissions: number, history: any[], unlockedBadges: Badge[]) => {
+  const handleEndGame = useCallback((score: number, totalSubmissions: number, history: any[], unlockedBadges: Badge[]) => {
     setLastScore(score);
     setLastTotal(totalSubmissions);
     setLastHistory(history);
@@ -94,12 +94,12 @@ export default function App() {
       history
     });
     localStorage.setItem('speedMathProgress', JSON.stringify(progress));
-  };
+  }, [settings]);
 
   const screenBackground =
     appState === 'PLAYING' || appState === 'PRACTICE'
       ? backgrounds.exercise
-      : appState === 'PROGRESS' || appState === 'PROFILE' || appState === 'CHALLENGES'
+      : appState === 'PROGRESS' || appState === 'CHALLENGES'
       ? backgrounds.profile
       : backgrounds.home;
   const isExerciseScreen = appState === 'PLAYING';
@@ -107,7 +107,7 @@ export default function App() {
   return (
     <div
       className={`min-h-[100dvh] w-full relative bg-[#02081f] text-slate-900 font-sans tracking-tight flex justify-center selection:bg-cyan-200 overflow-x-hidden ${
-        isExerciseScreen ? 'items-center overflow-hidden p-0' : 'items-start overflow-y-auto p-0'
+        isExerciseScreen ? 'app-shell-gameplay items-center p-0' : 'app-shell-scroll items-start p-0'
       }`}
       style={{
         backgroundImage: `radial-gradient(circle at 50% -12%, rgba(14, 165, 233, 0.22), transparent 42%), linear-gradient(180deg, rgba(2, 8, 31, 0.52), rgba(2, 8, 31, 0.88)), url(${screenBackground})`,
@@ -192,19 +192,6 @@ export default function App() {
                    className="w-full flex justify-center"
                  >
                     <Stats onBack={() => navigateTo('HOME')} onStartGame={handleStartGame} onNavigate={navigateTo} />
-                 </motion.div>
-             )}
-
-             {appState === 'PROFILE' && (
-                 <motion.div
-                   key="profile"
-                   initial={{ opacity: 0, y: 30 }}
-                   animate={{ opacity: 1, y: 0 }}
-                   exit={{ opacity: 0, y: -20 }}
-                   transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                   className="w-full flex justify-center"
-                 >
-                    <Profile onStartGame={handleStartGame} onNavigate={navigateTo} />
                  </motion.div>
              )}
 

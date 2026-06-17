@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Activity,
   ArrowLeft,
@@ -26,7 +26,6 @@ import { sounds } from '../utils/soundEngine';
 import {
   badgeArtByAchievementId,
   badges as badgeAssets,
-  brandMarks,
   fx,
   mascots,
   panels,
@@ -46,7 +45,7 @@ import {
 interface StatsProps {
   onBack: () => void;
   onStartGame: () => void;
-  onNavigate: (state: 'HOME' | 'PRACTICE' | 'PROGRESS' | 'PROFILE' | 'CHALLENGES') => void;
+  onNavigate: (state: 'HOME' | 'PRACTICE' | 'PROGRESS' | 'CHALLENGES') => void;
 }
 
 export const Stats: React.FC<StatsProps> = ({ onBack, onStartGame, onNavigate }) => {
@@ -66,71 +65,142 @@ export const Stats: React.FC<StatsProps> = ({ onBack, onStartGame, onNavigate })
     }
   }, []);
 
-  const totalGames = progress.length;
-  const highestScore = progress.reduce((max, s) => Math.max(max, s.score), 0);
-  const totalSubmissions = progress.reduce((sum, s) => sum + (s.totalSubmissions || s.totalQuestions || 0), 0);
-  const totalCorrect = progress.reduce((sum, s) => sum + s.score, 0);
-  const overallAccuracy = totalSubmissions > 0 ? Math.round((totalCorrect / totalSubmissions) * 100) : 0;
+  const {
+    totalGames,
+    highestScore,
+    totalCorrect,
+    overallAccuracy,
+    avgTimeCorrect,
+    under5,
+    between5and10,
+    over10,
+    operationStats,
+    bestOp,
+    worstOp,
+    chartData,
+    unlockedCount,
+    levelProgress,
+    kpis,
+  } = useMemo(() => {
+    const totalGamesValue = progress.length;
+    const highestScoreValue = progress.reduce((max, s) => Math.max(max, s.score || 0), 0);
+    const totalSubmissionsValue = progress.reduce((sum, s) => sum + (s.totalSubmissions || s.totalQuestions || 0), 0);
+    const totalCorrectValue = progress.reduce((sum, s) => sum + (s.score || 0), 0);
+    const overallAccuracyValue = totalSubmissionsValue > 0 ? Math.round((totalCorrectValue / totalSubmissionsValue) * 100) : 0;
+    const allHistory = progress.flatMap((s) => s.history || []);
 
-  const allHistory = progress.flatMap((s) => s.history || []);
+    let avgTimeCorrectValue = 0;
+    let under5Value = 0;
+    let between5and10Value = 0;
+    let over10Value = 0;
+    const operationStatsValue: Record<string, { count: number; totalTime: number }> = {};
 
-  let avgTimeCorrect = 0;
-  let under5 = 0;
-  let between5and10 = 0;
-  let over10 = 0;
+    allHistory.forEach((h) => {
+      if (typeof h.timeSpent === 'number') {
+        avgTimeCorrectValue += h.timeSpent;
+        if (h.timeSpent < 5) under5Value++;
+        else if (h.timeSpent <= 10) between5and10Value++;
+        else over10Value++;
 
-  const operationStats: Record<string, { count: number; totalTime: number }> = {};
-
-  allHistory.forEach((h) => {
-    if (typeof h.timeSpent === 'number') {
-      avgTimeCorrect += h.timeSpent;
-      if (h.timeSpent < 5) under5++;
-      else if (h.timeSpent <= 10) between5and10++;
-      else over10++;
-
-      const op = h.problem?.operation;
-      if (op) {
-        if (!operationStats[op]) operationStats[op] = { count: 0, totalTime: 0 };
-        operationStats[op].count++;
-        operationStats[op].totalTime += h.timeSpent;
+        const op = h.problem?.operation;
+        if (op) {
+          if (!operationStatsValue[op]) operationStatsValue[op] = { count: 0, totalTime: 0 };
+          operationStatsValue[op].count++;
+          operationStatsValue[op].totalTime += h.timeSpent;
+        }
       }
-    }
-  });
+    });
 
-  const historyCount = allHistory.length;
-  if (historyCount > 0) avgTimeCorrect = avgTimeCorrect / historyCount;
+    if (allHistory.length > 0) avgTimeCorrectValue /= allHistory.length;
 
-  let bestOp = 'N/A';
-  let worstOp = 'N/A';
-  if (Object.keys(operationStats).length > 0) {
-    const ops = Object.keys(operationStats)
+    let bestOpValue = 'N/A';
+    let worstOpValue = 'N/A';
+    const ops = Object.keys(operationStatsValue)
       .map((op) => ({
         op,
-        avgTime: operationStats[op].totalTime / operationStats[op].count,
+        avgTime: operationStatsValue[op].totalTime / operationStatsValue[op].count,
       }))
       .sort((a, b) => a.avgTime - b.avgTime);
 
-    bestOp = ops[0].op;
-    worstOp = ops[ops.length - 1].op;
-  }
+    if (ops.length > 0) {
+      bestOpValue = ops[0].op;
+      worstOpValue = ops[ops.length - 1].op;
+    }
 
-  const recentSessions = progress.slice(-10);
-  const chartData = recentSessions.map((session, index) => {
-    const sDate = session.date ? new Date(session.date) : new Date();
-    const formattedDate = `${sDate.getMonth() + 1}/${sDate.getDate()}`;
-    const acc = session.totalSubmissions ? Math.round((session.score / session.totalSubmissions) * 100) : 0;
+    const recentSessions = progress.slice(-10);
+    const chartDataValue = recentSessions.map((session, index) => {
+      const sDate = session.date ? new Date(session.date) : new Date();
+      const formattedDate = `${sDate.getMonth() + 1}/${sDate.getDate()}`;
+      const submissions = session.totalSubmissions || session.totalQuestions || session.history?.length || session.score || 0;
+      const scoreValue = Math.max(0, session.score || 0);
+      const acc = submissions > 0 ? Math.round(Math.min(100, (scoreValue / submissions) * 100)) : scoreValue > 0 ? 100 : 0;
+      const sessionHistory = Array.isArray(session.history) ? session.history : [];
+      const avgSpeed =
+        sessionHistory.length > 0
+          ? sessionHistory.reduce((sum: number, item: any) => sum + (typeof item.timeSpent === 'number' ? item.timeSpent : 0), 0) / sessionHistory.length
+          : 0;
+      return {
+        name: `#${index + 1}`,
+        date: formattedDate,
+        score: scoreValue,
+        accuracy: acc,
+        speed: Number(avgSpeed.toFixed(1)),
+      };
+    });
+
+    const unlockedCountValue = badges.filter((badge) => badge.unlocked).length;
+    const levelProgressValue = Math.min(100, totalCorrectValue % 100 || (totalCorrectValue > 0 ? 100 : 0));
+    const kpisValue = [
+      {
+        id: 'card_accuracy',
+        label: 'Accuracy',
+        value: `${overallAccuracyValue}%`,
+        icon: Target,
+        className: 'border-emerald-300/50 text-emerald-100 shadow-[0_0_24px_rgba(16,185,129,0.18)]',
+      },
+      {
+        id: 'card_avg_speed',
+        label: 'Avg speed',
+        value: `${avgTimeCorrectValue.toFixed(1)}s`,
+        icon: Clock,
+        className: 'border-cyan-300/50 text-cyan-100 shadow-[0_0_24px_rgba(34,211,238,0.18)]',
+      },
+      {
+        id: 'card_high_score',
+        label: 'High score',
+        value: `${highestScoreValue}`,
+        icon: Trophy,
+        className: 'border-fuchsia-300/55 text-fuchsia-100 shadow-[0_0_26px_rgba(217,70,239,0.2)]',
+      },
+      {
+        id: 'card_total_solved',
+        label: 'Solved',
+        value: `${totalCorrectValue}`,
+        icon: Activity,
+        className: 'border-blue-300/55 text-blue-100 shadow-[0_0_26px_rgba(59,130,246,0.22)]',
+      },
+    ];
+
     return {
-      name: `#${index + 1}`,
-      date: formattedDate,
-      score: session.score,
-      accuracy: acc,
+      totalGames: totalGamesValue,
+      highestScore: highestScoreValue,
+      totalCorrect: totalCorrectValue,
+      overallAccuracy: overallAccuracyValue,
+      avgTimeCorrect: avgTimeCorrectValue,
+      under5: under5Value,
+      between5and10: between5and10Value,
+      over10: over10Value,
+      operationStats: operationStatsValue,
+      bestOp: bestOpValue,
+      worstOp: worstOpValue,
+      chartData: chartDataValue,
+      unlockedCount: unlockedCountValue,
+      levelProgress: levelProgressValue,
+      kpis: kpisValue,
     };
-  });
+  }, [badges, progress]);
 
-  const unlockedCount = badges.filter((badge) => badge.unlocked).length;
-  const levelProgress = Math.min(100, totalCorrect % 100 || (totalCorrect > 0 ? 100 : 0));
-
-  const handleNavSelect = (key: PremiumNavKey) => {
+  const handleNavSelect = useCallback((key: PremiumNavKey) => {
     sounds.playClick();
     if (key === 'home') {
       onBack();
@@ -138,50 +208,19 @@ export const Stats: React.FC<StatsProps> = ({ onBack, onStartGame, onNavigate })
       onNavigate('PRACTICE');
     } else if (key === 'challenges') {
       onNavigate('CHALLENGES');
-    } else if (key === 'profile') {
-      onNavigate('PROFILE');
     }
-  };
-
-  const kpis = [
-    {
-      id: 'card_accuracy',
-      label: 'Accuracy',
-      value: `${overallAccuracy}%`,
-      icon: Target,
-      className: 'border-emerald-300/50 text-emerald-100 shadow-[0_0_24px_rgba(16,185,129,0.18)]',
-    },
-    {
-      id: 'card_avg_speed',
-      label: 'Avg speed',
-      value: `${avgTimeCorrect.toFixed(1)}s`,
-      icon: Clock,
-      className: 'border-cyan-300/50 text-cyan-100 shadow-[0_0_24px_rgba(34,211,238,0.18)]',
-    },
-    {
-      id: 'card_high_score',
-      label: 'High score',
-      value: `${highestScore}`,
-      icon: Trophy,
-      className: 'border-fuchsia-300/55 text-fuchsia-100 shadow-[0_0_26px_rgba(217,70,239,0.2)]',
-    },
-    {
-      id: 'card_total_solved',
-      label: 'Solved',
-      value: `${totalCorrect}`,
-      icon: Activity,
-      className: 'border-blue-300/55 text-blue-100 shadow-[0_0_26px_rgba(59,130,246,0.22)]',
-    },
-  ];
+  }, [onBack, onNavigate]);
 
   return (
     <>
       <PremiumScreen wide>
         <PremiumTopBar
-          logoSrc={brandMarks.primaryLogo}
-          onPrimaryAction={onBack}
+          markIcon={BarChart3}
+          markAlt="Progress dashboard icon"
+          markTone="stats"
+          titleEyebrow="Progress"
+          titleMain="Dashboard"
           onSecondaryAction={onStartGame}
-          primaryTitle="Back to dashboard"
           secondaryTitle="Start Level 1 drill"
         />
 
@@ -207,7 +246,6 @@ export const Stats: React.FC<StatsProps> = ({ onBack, onStartGame, onNavigate })
           <div className="relative z-10 grid grid-cols-[96px_1fr] items-center gap-4 sm:grid-cols-[128px_1fr]">
             <div className="relative grid h-32 place-items-center sm:h-40">
               <div className="absolute left-1/2 top-2 h-[108px] w-[108px] -translate-x-1/2 rounded-[2rem] border border-cyan-200/42 bg-cyan-300/10 shadow-[0_0_34px_rgba(34,211,238,0.26),inset_0_1px_0_rgba(255,255,255,0.12)] sm:top-3 sm:h-32 sm:w-32" />
-              <div className="absolute left-1/2 top-[76px] h-12 w-24 -translate-x-1/2 rounded-full border border-amber-300/22 bg-amber-300/10 shadow-[0_0_28px_rgba(251,191,36,0.22)] sm:top-[98px] sm:h-14 sm:w-32" />
               <img
                 src={mascots.headAvatar}
                 alt="Pi-bot avatar"
@@ -215,8 +253,7 @@ export const Stats: React.FC<StatsProps> = ({ onBack, onStartGame, onNavigate })
               />
             </div>
             <div className="min-w-0">
-              <p className={`${labelClass} text-cyan-300`}>Progress dashboard</p>
-              <h2 className="mt-1 text-[42px] font-black leading-none tracking-tight text-white sm:text-5xl">Level 1</h2>
+              <h2 className="text-[42px] font-black leading-none tracking-tight text-white sm:text-5xl">Level 1</h2>
               <div className="mt-4 flex items-center gap-3">
                 <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-800/90">
                   <div
@@ -296,26 +333,56 @@ export const Stats: React.FC<StatsProps> = ({ onBack, onStartGame, onNavigate })
         </section>
 
         <section className={`${PremiumGlassClass} mt-4 p-4`} style={premiumPanelStyle(panels.cosmicCard, 'rgba(7, 13, 34, 0.82)')}>
-          <h3 className={`${labelClass} mb-4 flex items-center gap-2 text-cyan-300`}>
-            <BarChart3 className="h-4 w-4 text-blue-300" />
-            Recent drills
-          </h3>
+          <div className="relative z-10 mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h3 className={`${labelClass} flex items-center gap-2 text-cyan-300`}>
+              <BarChart3 className="h-4 w-4 text-blue-300" />
+              Recent drills
+            </h3>
+            {chartData.length > 0 && (
+              <div className="flex gap-2 text-[10px] font-black uppercase tracking-widest">
+                <span className="rounded-full border border-sky-300/30 bg-sky-300/10 px-2.5 py-1 text-sky-100">Score</span>
+                <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-2.5 py-1 text-emerald-100">Accuracy</span>
+              </div>
+            )}
+          </div>
           {chartData.length === 0 ? (
             <div className="flex h-64 items-center justify-center rounded-2xl border border-cyan-100/12 bg-slate-950/40">
               <span className="text-xs font-black uppercase tracking-widest text-cyan-100/45">No session data logged yet</span>
             </div>
           ) : (
-            <div className="h-64 w-full text-xs font-mono">
+            <div className="progress-chart-shell h-72 w-full rounded-[1.35rem] border border-cyan-100/14 bg-slate-950/48 p-2 text-xs font-mono shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 10, right: 20, left: -20, bottom: 5 }}>
-                  <CartesianGrid stroke="#164e63" strokeOpacity={0.35} strokeDasharray="3 3" />
-                  <XAxis dataKey="name" tick={{ fill: '#a5f3fc', fontSize: 10 }} />
-                  <YAxis yAxisId="left" tick={{ fill: '#93c5fd', fontSize: 10 }} name="Score" />
-                  <YAxis yAxisId="right" orientation="right" tick={{ fill: '#34d399', fontSize: 10 }} name="Accuracy" unit="%" />
-                  <Tooltip contentStyle={{ background: '#020617', color: '#e0f2fe', borderRadius: '12px', border: '1px solid rgba(103,232,249,0.3)', fontFamily: 'monospace' }} />
-                  <Legend wrapperStyle={{ paddingTop: 10, fontSize: 11 }} />
-                  <Line yAxisId="left" type="monotone" dataKey="score" name="Score" stroke="#38bdf8" strokeWidth={3} activeDot={{ r: 8 }} />
-                  <Line yAxisId="right" type="monotone" dataKey="accuracy" name="Accuracy (%)" stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" />
+                <LineChart data={chartData} margin={{ top: 18, right: 16, left: -18, bottom: 8 }}>
+                  <defs>
+                    <linearGradient id="scoreLineGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#67e8f9" />
+                      <stop offset="100%" stopColor="#60a5fa" />
+                    </linearGradient>
+                    <linearGradient id="accuracyLineGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#6ee7b7" />
+                      <stop offset="100%" stopColor="#facc15" />
+                    </linearGradient>
+                    <filter id="chartGlow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+                      <feMerge>
+                        <feMergeNode in="coloredBlur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  <CartesianGrid stroke="#155e75" strokeOpacity={0.22} strokeDasharray="4 8" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fill: '#a5f3fc', fontSize: 10, fontWeight: 700 }} axisLine={{ stroke: '#164e63', strokeOpacity: 0.45 }} tickLine={false} />
+                  <YAxis yAxisId="left" tick={{ fill: '#93c5fd', fontSize: 10, fontWeight: 700 }} name="Score" axisLine={false} tickLine={false} allowDecimals={false} width={34} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fill: '#6ee7b7', fontSize: 10, fontWeight: 700 }} name="Accuracy" unit="%" axisLine={false} tickLine={false} domain={[0, 100]} width={38} />
+                  <Tooltip
+                    contentStyle={{ background: '#020617', color: '#e0f2fe', borderRadius: '14px', border: '1px solid rgba(103,232,249,0.28)', fontFamily: 'monospace', boxShadow: '0 12px 28px rgba(0,0,0,0.28)' }}
+                    labelStyle={{ color: '#67e8f9', fontWeight: 900 }}
+                    formatter={(value, name) => [name === 'Accuracy (%)' ? `${value}%` : value, name]}
+                    labelFormatter={(_, payload) => payload?.[0]?.payload?.date ?? 'Drill'}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: 8, fontSize: 11, color: '#cffafe' }} />
+                  <Line yAxisId="left" type="monotone" dataKey="score" name="Score" stroke="url(#scoreLineGradient)" strokeWidth={3.5} filter="url(#chartGlow)" dot={{ r: 3.5, strokeWidth: 2, fill: '#020617', stroke: '#67e8f9' }} activeDot={{ r: 6, strokeWidth: 2, fill: '#67e8f9', stroke: '#ecfeff' }} />
+                  <Line yAxisId="right" type="monotone" dataKey="accuracy" name="Accuracy (%)" stroke="url(#accuracyLineGradient)" strokeWidth={2.5} strokeDasharray="7 6" dot={{ r: 3, strokeWidth: 2, fill: '#020617', stroke: '#6ee7b7' }} activeDot={{ r: 5, strokeWidth: 2, fill: '#6ee7b7', stroke: '#ecfeff' }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>

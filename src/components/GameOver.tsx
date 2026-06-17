@@ -6,7 +6,6 @@ import { sounds } from '../utils/soundEngine';
 import {
   badgeArtByAchievementId,
   badges as badgeAssets,
-  brandMarks,
   buttonGlows,
   fx,
   mascots,
@@ -66,7 +65,7 @@ export const GameOver: React.FC<GameOverProps> = ({ score, totalQuestions, histo
        id="gameover_screen_root"
        initial={{ opacity: 0, y: 20 }}
        animate={{ opacity: 1, y: 0 }}
-       className="premium-card-depth relative mx-auto w-[calc(100%-28px)] max-w-xl overflow-hidden rounded-[1.85rem] border border-cyan-300/45 bg-[#02081f]/90 p-5 text-white shadow-[0_20px_60px_rgba(8,47,73,0.42),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl md:p-8"
+       className="mobile-light-glass premium-card-depth relative mx-auto w-[calc(100%-28px)] max-w-xl overflow-hidden rounded-[1.85rem] border border-cyan-300/45 bg-[#02081f]/90 p-5 text-white shadow-[0_16px_42px_rgba(8,47,73,0.32),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md md:p-8"
        style={{
          ...modalPanelStyle(panels.modalGlow, 'rgba(3, 12, 38, 0.88)'),
          marginTop: 'max(18px, calc(var(--safe-top) + 12px))',
@@ -78,7 +77,7 @@ export const GameOver: React.FC<GameOverProps> = ({ score, totalQuestions, histo
        <div className="mb-4 flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-cyan-200/35 bg-cyan-300/10 shadow-[0_0_22px_rgba(34,211,238,0.2)]">
-                <img src={brandMarks.primaryLogo} alt="SpeedMath Coach logo" className="h-10 w-10 object-contain drop-shadow-[0_0_12px_rgba(251,191,36,0.3)]" />
+                <Trophy className="h-7 w-7 text-amber-300" />
              </div>
              <div className="min-w-0">
                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">SpeedMath</p>
