@@ -1,8 +1,30 @@
 apply plugin: 'com.android.application'
 
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    def keystorePropertiesBytes = keystorePropertiesFile.bytes
+    if (keystorePropertiesBytes.length >= 3 &&
+        keystorePropertiesBytes[0] == (byte) 0xEF &&
+        keystorePropertiesBytes[1] == (byte) 0xBB &&
+        keystorePropertiesBytes[2] == (byte) 0xBF) {
+        keystoreProperties.load(new ByteArrayInputStream(keystorePropertiesBytes, 3, keystorePropertiesBytes.length - 3))
+    } else {
+        keystoreProperties.load(new ByteArrayInputStream(keystorePropertiesBytes))
+    }
+}
+
 android {
     namespace = "com.caivratech.speedmathcoach"
     compileSdk = rootProject.ext.compileSdkVersion
+    signingConfigs {
+        release {
+            storeFile file(keystoreProperties["storeFile"])
+            storePassword keystoreProperties["storePassword"]
+            keyAlias keystoreProperties["keyAlias"]
+            keyPassword keystoreProperties["keyPassword"]
+        }
+    }
     defaultConfig {
         applicationId "com.caivratech.speedmathcoach"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -19,6 +41,7 @@ android {
     buildTypes {
         release {
             minifyEnabled false
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
