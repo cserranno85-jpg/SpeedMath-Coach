@@ -98,8 +98,10 @@ jobs:
           set -euo pipefail
           bundle="android/app/build/outputs/bundle/release/app-release.aab"
           unzip -t "$bundle" >/dev/null
-          unzip -Z1 "$bundle" | grep -Fxq 'BundleConfig.pb'
-          unzip -Z1 "$bundle" | grep -Fxq 'base/manifest/AndroidManifest.xml'
+          unzip -Z1 "$bundle" > gpcg-001-zip-entries.txt
+          grep -Fxq 'BundleConfig.pb' gpcg-001-zip-entries.txt
+          grep -Fxq 'base/manifest/AndroidManifest.xml' gpcg-001-zip-entries.txt
+          rm gpcg-001-zip-entries.txt
           tool="bundletool-all-1.18.3.jar"
           curl --fail --location --retry 3 --output "$tool" \
             "https://github.com/google/bundletool/releases/download/1.18.3/$tool"
