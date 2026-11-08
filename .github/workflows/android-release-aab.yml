@@ -92,9 +92,20 @@ jobs:
       - name: Verify signed AAB
         run: jarsigner -verify -verbose -certs android/app/build/outputs/bundle/release/app-release.aab
 
+      - name: GPCG-001 fingerprint signed AAB (build identity only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/gpcg-001-build-identity.test.mjs
+          node scripts/gpcg-001-build-identity.mjs \
+            --aab android/app/build/outputs/bundle/release/app-release.aab \
+            --source "$GITHUB_SHA" \
+            --output gpcg-001-build-identity.json
       - name: Upload Android AAB artifact
         uses: actions/upload-artifact@v4
         with:
           name: SpeedMathCoach-Android-v1.1.0-build4
-          path: android/app/build/outputs/bundle/release/app-release.aab
+          path: |
+            android/app/build/outputs/bundle/release/app-release.aab
+            gpcg-001-build-identity.json
           if-no-files-found: error
