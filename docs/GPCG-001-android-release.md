@@ -16,3 +16,11 @@ The shared GPCG-001 evidence owner is the private `cserranno85-jpg/caivra-tech-c
 Owner-confirmed completed: trader declaration and consolidated application Terms submission at https://caivra.com/legal/app-terms/. These are not outstanding tasks unless contradicted by new evidence.
 
 A manual Play Console upload is not blocked by GitHub CI. Do not describe GPCG-001 as an enforced Google Play publication guard until actual store-publication authority and branch protections are separately established.
+
+## Reconciliation against November 10 provider inspection (reported; not a signed-build attestation)
+
+The authenticated Play Console review reported the currently published SpeedMath Coach bundle as **versionCode 7 / 1.1.1**, target SDK 36, 16 KB page support, three compiled permissions, and no displayed policy issues. Edge-to-edge and older test-track recommendations remain. Provider-facing app status was observed by the separate Astra inspection and is not cryptographic evidence of this branch's build provenance.
+
+Current GitHub `main` remains `791f0031de7d87889bd78be941d70278c771de4b` at the November 11 reconciliation. The proposed `bundletool` checksum, compiled manifest validation and `jarsigner` route have **not run together under the signed `workflow_dispatch` release workflow at this candidate HEAD**. A successful normal Mobile CI/debug APK does not qualify the AAB. Until a signed workflow run binds an AAB to the exact source and Play bundle, artifact qualification is **INSUFFICIENT EVIDENCE**. The workflow has no Play publisher step; direct Console submission remains outside the proposed gate.
+
+Run only the existing nonpublishing signed-AAB workflow under a separately supported manual workflow dispatch. Do not upload to Play or read out signing credentials.
