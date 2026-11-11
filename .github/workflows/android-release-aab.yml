@@ -92,9 +92,62 @@ jobs:
       - name: Verify signed AAB
         run: jarsigner -verify -verbose -certs android/app/build/outputs/bundle/release/app-release.aab
 
+      - name: GPCG-001 verify actual bundle format and compiled identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          bundle="android/app/build/outputs/bundle/release/app-release.aab"
+          unzip -t "$bundle" >/dev/null
+          unzip -Z1 "$bundle" > gpcg-001-zip-entries.txt
+          grep -Fxq 'BundleConfig.pb' gpcg-001-zip-entries.txt
+          grep -Fxq 'base/manifest/AndroidManifest.xml' gpcg-001-zip-entries.txt
+          rm gpcg-001-zip-entries.txt
+          tool="bundletool-all-1.18.3.jar"
+          curl --fail --location --retry 3 --output "$tool" \
+            "https://github.com/google/bundletool/releases/download/1.18.3/$tool"
+          printf '%s  %s\n' 'a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29' "$tool" | sha256sum --check
+          java -jar "$tool" validate --bundle="$bundle"
+          package="$(java -jar "$tool" dump manifest --bundle="$bundle" --xpath='/manifest/@package')"
+          version_code="$(java -jar "$tool" dump manifest --bundle="$bundle" --xpath='/manifest/@android:versionCode')"
+          target_sdk="$(java -jar "$tool" dump manifest --bundle="$bundle" --xpath='/manifest/uses-sdk/@android:targetSdkVersion')"
+          if [[ "$package" != 'com.caivratech.speedmathcoach' ]]; then
+            echo "::error::Compiled package mismatch"
+            exit 1
+          fi
+          if ! [[ "$version_code" =~ ^[0-9]+$ ]] || (( version_code < 1 )); then
+            echo "::error::Invalid compiled version code"
+            exit 1
+          fi
+          if ! [[ "$target_sdk" =~ ^[0-9]+$ ]] || (( target_sdk < 36 )); then
+            echo "::error::Compiled target SDK below 36"
+            exit 1
+          fi
+          export package version_code target_sdk
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const {package: packageName,version_code: versionCode,target_sdk: targetSdk}=process.env;
+          fs.writeFileSync('gpcg-001-compiled-metadata.json',JSON.stringify({
+            scope: 'COMPILED_BUNDLE_METADATA_NOT_PLAY_APPROVAL',
+            package_name:packageName,version_code:Number(versionCode),target_sdk:Number(targetSdk),
+            bundletool:'1.18.3',source_commit:process.env.GITHUB_SHA
+          },null,2)+'\n',{flag:'wx'});
+          NODE
+
+      - name: GPCG-001 fingerprint signed AAB (build identity only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/gpcg-001-build-identity.test.mjs
+          node scripts/gpcg-001-build-identity.mjs \
+            --aab android/app/build/outputs/bundle/release/app-release.aab \
+            --source "$GITHUB_SHA" \
+            --output gpcg-001-build-identity.json
       - name: Upload Android AAB artifact
         uses: actions/upload-artifact@v4
         with:
           name: SpeedMathCoach-Android-v1.1.0-build4
-          path: android/app/build/outputs/bundle/release/app-release.aab
+          path: |
+            android/app/build/outputs/bundle/release/app-release.aab
+            gpcg-001-build-identity.json
+            gpcg-001-compiled-metadata.json
           if-no-files-found: error
