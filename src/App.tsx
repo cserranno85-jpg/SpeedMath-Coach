@@ -6,12 +6,13 @@ import { GameOver } from './components/GameOver';
 import { Stats } from './components/Stats';
 import { Profile } from './components/Profile';
 import { Challenges } from './components/Challenges';
+import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { motion, AnimatePresence } from 'motion/react';
 import { Badge } from './utils/streakAndAchievements';
 import { backgrounds, fx } from './assets/uiAssetRegistry';
 import { sounds } from './utils/soundEngine';
 
-type AppState = 'HOME' | 'PRACTICE' | 'PLAYING' | 'GAMEOVER' | 'PROGRESS' | 'PROFILE' | 'CHALLENGES';
+type AppState = 'HOME' | 'PRACTICE' | 'PLAYING' | 'GAMEOVER' | 'PROGRESS' | 'PROFILE' | 'CHALLENGES' | 'PRIVACY';
 
 const DEFAULT_SETTINGS: Settings = {
   difficulty: Difficulty.BEGINNER,
@@ -99,7 +100,7 @@ export default function App() {
   const screenBackground =
     appState === 'PLAYING' || appState === 'PRACTICE'
       ? backgrounds.exercise
-      : appState === 'PROGRESS' || appState === 'PROFILE' || appState === 'CHALLENGES'
+      : appState === 'PROGRESS' || appState === 'PROFILE' || appState === 'CHALLENGES' || appState === 'PRIVACY'
       ? backgrounds.profile
       : backgrounds.home;
   const isExerciseScreen = appState === 'PLAYING';
@@ -205,6 +206,19 @@ export default function App() {
                    className="w-full flex justify-center"
                  >
                     <Profile onStartGame={handleStartGame} onNavigate={navigateTo} />
+                 </motion.div>
+             )}
+
+             {appState === 'PRIVACY' && (
+                 <motion.div
+                   key="privacy"
+                   initial={{ opacity: 0, y: 30 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   exit={{ opacity: 0, y: -20 }}
+                   transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                   className="w-full flex justify-center"
+                 >
+                   <PrivacyPolicy onBack={() => navigateTo('PRACTICE')} />
                  </motion.div>
              )}
 
