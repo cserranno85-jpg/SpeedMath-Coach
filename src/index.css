@@ -236,3 +236,94 @@
     gap: 8px;
   }
 }
+
+
+/* SpeedMath Focus v2 — shared presentation primitives derived from the Figma study.
+ * These rules deliberately do not change game state, scoring, or storage. */
+:root {
+  --sm-bg: #040c24;
+  --sm-surface: #10254b;
+  --sm-surface-raised: #0b1b3a;
+  --sm-primary: #61e4ff;
+  --sm-gold: #ffc768;
+  --sm-border: #2b5e87;
+  --sm-text: #f7fbff;
+  --sm-muted: #b5cbe8;
+}
+html, body, #root {
+  background: var(--sm-bg);
+}
+.sm-touch-target {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.sm-touch-target:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #91eeff;
+  outline-offset: 3px;
+}
+.sm-stat-card {
+  min-height: 136px;
+  border-radius: 20px;
+  border: 1px solid var(--sm-border);
+  background: var(--sm-surface);
+  padding: 18px;
+  color: var(--sm-text);
+}
+.premium-card-depth {
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+}
+.premium-card-depth::before,
+.premium-shimmer::after {
+  display: none;
+}
+.premium-selected-glow,
+.premium-cta-glow {
+  animation: none;
+}
+.premium-3d-button,
+.premium-action-pill,
+.premium-toggle-3d,
+.premium-key-3d {
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.09);
+}
+.premium-3d-button:active,
+.premium-action-pill:active,
+.premium-toggle-3d:active,
+.premium-key-3d:active {
+  transform: translateY(1px);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+}
+.gameplay-equation-card {
+  background-color: #142b50;
+  border-color: #4cbde3;
+  box-shadow: 0 10px 30px rgba(1,8,26,0.18);
+}
+.gameplay-hud-safe {
+  background-color: #0b1b3a;
+  border-color: #2b5e87;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.2);
+}
+.gameplay-keypad-grid .premium-key-3d {
+  background-color: #10254b;
+  border-color: #36709a;
+  border-radius: 16px;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.16);
+  min-height: 50px;
+}
+.gameplay-keypad-grid button:focus-visible {
+  outline: 3px solid var(--sm-primary);
+}
+@media (max-width: 380px) {
+  .gameplay-keypad-grid { gap: 7px; }
+  .gameplay-main-stack { gap: 7px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-pibot,
+  .animate-pulse,
+  .animate-spin,
+  .animate-bounce {
+    animation: none !important;
+  }
+}

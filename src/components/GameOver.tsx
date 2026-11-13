@@ -1,17 +1,9 @@
 import React, { useEffect } from 'react';
-import { RotateCw, Trophy, Clock, Star } from 'lucide-react';
-import { motion } from 'motion/react';
+import { ArrowRight, BarChart3, Clock3, RotateCw, Star, Trophy } from 'lucide-react';
 import { Badge } from '../utils/streakAndAchievements';
 import { sounds } from '../utils/soundEngine';
-import {
-  badgeArtByAchievementId,
-  badges as badgeAssets,
-  brandMarks,
-  buttonGlows,
-  fx,
-  mascots,
-  panels,
-} from '../assets/uiAssetRegistry';
+import { badgeArtByAchievementId, badges as badgeAssets, brandMarks, mascots } from '../assets/uiAssetRegistry';
+import { PremiumGlassClass, PremiumCTA, PremiumScreen, labelClass } from './PremiumShell';
 
 interface GameOverProps {
   score: number;
@@ -22,175 +14,109 @@ interface GameOverProps {
   onMenu: () => void;
 }
 
-const modalPanelStyle = (asset: string, overlay = 'rgba(8, 13, 32, 0.84)'): React.CSSProperties => ({
-  backgroundImage: `linear-gradient(135deg, ${overlay}, rgba(2, 8, 31, 0.96)), url(${asset})`,
-  backgroundPosition: 'center',
-  backgroundSize: 'cover',
-});
-
-export const GameOver: React.FC<GameOverProps> = ({ score, totalQuestions, history, unlockedBadges, onPlayAgain, onMenu }) => {
-  const accuracy = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
-  
-  // Group history by time interval
-  const under3s = history.filter(h => h.timeSpent <= 3).length;
-  const under5s = history.filter(h => h.timeSpent > 3 && h.timeSpent <= 5).length;
-  const over5s = history.filter(h => h.timeSpent > 5).length;
+export const GameOver: React.FC<GameOverProps> = ({
+  score, totalQuestions, history, unlockedBadges, onPlayAgain, onMenu,
+}) => {
+  const accuracy = totalQuestions > 0 ? Math.round(score / totalQuestions * 100) : 0;
+  const under3s = history.filter(h => typeof h.timeSpent === 'number' && h.timeSpent <= 3).length;
+  const under5s = history.filter(h => typeof h.timeSpent === 'number' && h.timeSpent > 3 && h.timeSpent <= 5).length;
+  const over5s = history.filter(h => typeof h.timeSpent === 'number' && h.timeSpent > 5).length;
 
   useEffect(() => {
-    // Play descriptive sound cue depending on calibration score results
-    if (accuracy >= 80 && score > 0) {
-      sounds.playAchievement();
-    } else if (score > 0) {
-      sounds.playGameOver();
-    } else {
-      sounds.playIncorrect();
-    }
-
+    if (accuracy >= 80 && score > 0) sounds.playAchievement();
+    else if (score > 0) sounds.playGameOver();
+    else sounds.playIncorrect();
   }, [accuracy, score]);
 
-  const getReactiveMascotMessage = () => {
-    if (accuracy === 100 && score > 0) {
-      return `Masterful calculation skill! Absolute complete accuracy (100%) across all ${score} solutions! Truly a legend.`;
-    }
-    if (accuracy >= 80) {
-      return `Outstanding execution! Highly refined calculation metrics verified. You calibrated at a remarkable ${accuracy}% precision level!`;
-    }
-    if (accuracy >= 50) {
-      return `Decent runtime stats! Logic patterns are warm and functioning correctly. Let's do another run to break above 80%!`;
-    }
-    return `Session indexed. Practice drives neuroplasticity! Try adjusting difficulty to build a confidence run.`;
-  };
+  const guidance = accuracy >= 90
+    ? 'Great accuracy. Try another session to strengthen your consistency.'
+    : accuracy >= 60
+      ? 'Good progress. Focus on a steady pace before increasing difficulty.'
+      : 'Keep practicing at a comfortable pace. Accuracy comes with repetition.';
 
   return (
-    <motion.div 
-       id="gameover_screen_root"
-       initial={{ opacity: 0, y: 20 }}
-       animate={{ opacity: 1, y: 0 }}
-       className="premium-card-depth relative mx-auto w-[calc(100%-28px)] max-w-xl overflow-hidden rounded-[1.85rem] border border-cyan-300/45 bg-[#02081f]/90 p-5 text-white shadow-[0_20px_60px_rgba(8,47,73,0.42),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl md:p-8"
-       style={{
-         ...modalPanelStyle(panels.modalGlow, 'rgba(3, 12, 38, 0.88)'),
-         marginTop: 'max(18px, calc(var(--safe-top) + 12px))',
-         marginBottom: 'max(18px, calc(var(--safe-bottom) + 18px))',
-       }}
-    >
-       <img src={fx.mathParticles} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-10 mix-blend-screen pointer-events-none" />
-       <div className="relative z-10">
-       <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-             <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-cyan-200/35 bg-cyan-300/10 shadow-[0_0_22px_rgba(34,211,238,0.2)]">
-                <img src={brandMarks.primaryLogo} alt="SpeedMath Coach logo" className="h-10 w-10 object-contain drop-shadow-[0_0_12px_rgba(251,191,36,0.3)]" />
-             </div>
-             <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">SpeedMath</p>
-                <p className="text-lg font-black leading-tight text-white">Session Report</p>
-             </div>
-          </div>
-       </div>
-       {/* High Polish Mascot Presenter Header */}
-       <div className="relative mb-6 flex flex-col items-center gap-5 overflow-hidden rounded-[1.5rem] border border-cyan-300/28 bg-slate-950/62 p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:flex-row">
-          <img src={fx.goldSparkBurst} alt="" aria-hidden="true" className="absolute -top-12 -right-12 w-36 h-36 opacity-25 mix-blend-screen pointer-events-none" />
-          
-          {/* Animated 3D Mascot Avatar Frame */}
-          <div className="relative shrink-0 select-none">
-             <div className="w-20 h-20 transform -rotate-3 hover:rotate-0 transition-transform duration-300 animate-float-pibot">
-                <img 
-                   src={mascots.pointing}
-                   alt="Pi-bot coach"
-                   className="w-full h-full object-contain filter drop-shadow-[0_10px_18px_rgba(34,211,238,0.28)]"
-                />
-             </div>
-          </div>
+    <PremiumScreen className="gap-4">
+      <header className="flex items-center gap-3 rounded-[20px] border border-[#294C73] bg-[#0B1B3A] p-3">
+        <img src={brandMarks.primaryLogo} alt="SpeedMath Coach logo"
+          className="h-12 w-12 rounded-xl object-contain" />
+        <div>
+          <p className={labelClass + ' text-[#61E4FF]'}>SpeedMath / Coach</p>
+          <h1 className="text-[24px] font-black tracking-tight text-white">Drill complete.</h1>
+        </div>
+      </header>
 
-          <div className="flex-1 text-center sm:text-left">
-             <h3 className="text-xs uppercase font-extrabold tracking-widest text-amber-400 flex items-center justify-center sm:justify-start gap-1">
-                <Trophy className="w-3.5 h-3.5 text-yellow-400" /> Pi-bot Advisor Report
-             </h3>
-             <p className="text-xs font-semibold text-indigo-100 mt-1.5 italic leading-relaxed">
-                "{getReactiveMascotMessage()}"
-             </p>
-          </div>
-       </div>
+      <p className="px-1 text-sm text-[#B5CBE8]">Review your results, then go again.</p>
 
-       <div className="text-center mb-6">
-            <h2 className="text-2xl font-black text-cyan-50 tracking-tight">Practice Complete</h2>
-            <p className="text-xs text-cyan-100/55 font-medium tracking-tight mt-1">Here is your speed math performance.</p>
-       </div>
+      <section aria-labelledby="summary-heading" className={PremiumGlassClass + ' relative p-5'}>
+        <div className="flex items-center justify-between gap-4">
+          <p id="summary-heading" className={labelClass + ' text-[#61E4FF]'}>Session summary</p>
+          <img src={mascots.headAvatar} alt="" aria-hidden="true"
+            className="h-14 w-14 object-contain opacity-80" />
+        </div>
+        <div className="mt-1 text-[clamp(56px,18vw,80px)] font-black leading-none tracking-tight text-white">
+          {score} / {totalQuestions}
+        </div>
+        <p className="mt-3 text-lg font-bold text-[#C8E9FF]">
+          {accuracy}% accuracy {accuracy >= 80 ? '· Well played!' : '· Keep going!'}
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-[#B5CBE8]">{guidance}</p>
+      </section>
 
-       <div className="grid grid-cols-2 gap-3 mb-6">
-          <div className="bg-slate-950/70 p-5 rounded-[1.35rem] border border-cyan-300/35 flex flex-col items-center justify-center shadow-[0_0_22px_rgba(34,211,238,0.12)]" style={modalPanelStyle(panels.statsCard, 'rgba(10, 28, 52, 0.74)')}>
-              <span className="text-[10px] font-bold text-cyan-100/55 uppercase tracking-widest mb-1">Score</span>
-              <span className="text-4xl font-mono font-bold text-cyan-200 tracking-tighter">{score}</span>
-          </div>
-          <div className="bg-slate-950/70 p-5 rounded-[1.35rem] border border-amber-300/35 flex flex-col items-center justify-center shadow-[0_0_22px_rgba(251,191,36,0.12)]" style={modalPanelStyle(panels.statsCard, 'rgba(34, 28, 39, 0.74)')}>
-              <span className="text-[10px] font-bold text-amber-100/60 uppercase tracking-widest mb-1">Accuracy</span>
-              <span className="text-4xl font-mono font-bold text-amber-200 tracking-tighter">{accuracy}%</span>
-          </div>
-       </div>
+      <div className="grid grid-cols-2 gap-3">
+        <section className="sm-stat-card">
+          <Trophy aria-hidden="true" className="h-5 w-5 text-[#FFC768]" />
+          <p className="mt-2 text-[30px] font-black text-white">{score}</p>
+          <p className={labelClass + ' mt-1 text-[#B5CBE8]'}>Correct answers</p>
+        </section>
+        <section className="sm-stat-card">
+          <BarChart3 aria-hidden="true" className="h-5 w-5 text-[#61E4FF]" />
+          <p className="mt-2 text-[30px] font-black text-white">{totalQuestions}</p>
+          <p className={labelClass + ' mt-1 text-[#B5CBE8]'}>Attempts</p>
+        </section>
+      </div>
 
-       {/* Unlocked Badges Tray on gameover */}
-       {unlockedBadges.length > 0 && (
-         <div id="unlocked_badges_toast_tray" className="mb-6 bg-amber-200/10 p-4 rounded-xl border border-amber-300/45 shadow-[0_0_22px_rgba(251,191,36,0.12)] relative overflow-hidden">
-            <img src={badgeAssets.unlockBurst} alt="" aria-hidden="true" className="absolute -right-14 -top-14 h-36 w-36 opacity-25 mix-blend-screen pointer-events-none" />
-            <h4 className="relative text-[10px] font-bold text-amber-200 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-               <Star className="w-4 h-4 text-amber-500 fill-amber-500" /> New Achievements ({unlockedBadges.length})
-            </h4>
-            <div className="relative flex flex-wrap gap-2">
-               {unlockedBadges.map(badge => (
-                  <span 
-                    key={badge.id}
-                    title={badge.description}
-                    className="flex items-center gap-1.5 bg-slate-950/75 border border-amber-300/45 text-amber-100 px-3 py-1.5 rounded-full text-[10px] lg:text-xs font-bold shadow-sm"
-                  >
-                     <img src={badgeArtByAchievementId[badge.id] ?? badgeAssets.firstSolve} alt="" aria-hidden="true" className="w-5 h-5 object-contain shrink-0" />
-                     {badge.title}
-                  </span>
-               ))}
+      {unlockedBadges.length > 0 && (
+        <section id="unlocked_badges_toast_tray" aria-label="New achievements"
+          className={PremiumGlassClass + ' p-4'}>
+          <h2 className={labelClass + ' flex items-center gap-2 text-[#FFC768]'}>
+            <Star aria-hidden="true" className="h-4 w-4" />
+            New achievements
+          </h2>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {unlockedBadges.map(badge => (
+              <div key={badge.id} className="flex items-center gap-2 rounded-xl border border-[#B98F51] bg-[#352A1C] px-3 py-2 text-xs font-bold text-[#FFE1A8]">
+                <img src={badgeArtByAchievementId[badge.id] ?? badgeAssets.firstSolve}
+                  className="h-6 w-6 object-contain" alt="" aria-hidden="true" />
+                {badge.title}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section aria-labelledby="speed-summary" className={PremiumGlassClass + ' p-4'}>
+        <h2 id="speed-summary" className={labelClass + ' mb-3 flex items-center gap-2 text-[#61E4FF]'}>
+          <Clock3 aria-hidden="true" className="h-4 w-4" /> Answer speed
+        </h2>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { label: 'Under 3s', value: under3s },
+            { label: '3–5s', value: under5s },
+            { label: 'Over 5s', value: over5s },
+          ].map(({ label, value }) => (
+            <div key={label} className="rounded-[14px] border border-[#2B5E87] bg-[#0A1B39] px-2 py-3 text-center">
+              <p className="text-[22px] font-black text-[#E8F9FF]">{value}</p>
+              <p className="mt-1 text-[11px] text-[#B5CBE8]">{label}</p>
             </div>
-         </div>
-       )}
+          ))}
+        </div>
+      </section>
 
-       <div className="mb-8">
-            <h3 className="text-[10px] font-bold text-cyan-50 uppercase tracking-widest mb-4 flex items-center gap-2 border-b border-cyan-100/15 pb-2">
-                <Clock className="w-4 h-4 text-cyan-300" /> Speed Intervals
-            </h3>
-            <div className="space-y-3">
-                <div className="flex items-center justify-between rounded-2xl border border-cyan-100/15 bg-slate-950/65 p-3 text-cyan-50">
-                    <div className="flex items-center gap-2 text-xs font-bold">Under 3 seconds</div>
-                    <div className="font-mono font-bold text-cyan-300 text-sm">{under3s} <span className="text-[10px] text-cyan-100/45">ans</span></div>
-                </div>
-                <div className="flex items-center justify-between rounded-2xl border border-cyan-100/15 bg-slate-950/65 p-3 text-cyan-50">
-                    <div className="flex items-center gap-2 text-xs font-bold">3 - 5 seconds</div>
-                    <div className="font-mono font-bold text-cyan-300 text-sm">{under5s} <span className="text-[10px] text-cyan-100/45">ans</span></div>
-                </div>
-                <div className="flex items-center justify-between rounded-2xl border border-cyan-100/15 bg-slate-950/65 p-3 text-cyan-50">
-                    <div className="flex items-center gap-2 text-xs font-bold">Over 5 seconds</div>
-                    <div className="font-mono font-bold text-cyan-300 text-sm">{over5s} <span className="text-[10px] text-cyan-100/45">ans</span></div>
-                </div>
-            </div>
-       </div>
-
-       <div className="flex gap-4">
-            <button 
-              id="btn_gameover_settings"
-              onClick={() => { sounds.playClick(); onMenu(); }}
-              className="premium-3d-button flex-1 py-4 bg-[#02081f]/78 hover:bg-slate-900 border border-cyan-100/20 text-cyan-100/70 hover:text-cyan-100 rounded-2xl font-bold text-xs tracking-widest uppercase flex items-center justify-center cursor-pointer shadow-sm"
-            >
-               Settings
-            </button>
-            <button 
-              id="btn_gameover_playagain"
-              onClick={() => { sounds.playClick(); onPlayAgain(); }}
-              className="premium-3d-button flex-1 py-4 text-amber-950 rounded-2xl font-black text-xs tracking-widest uppercase flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_22px_rgba(251,191,36,0.25)] border border-amber-100"
-              style={{
-                backgroundImage: `linear-gradient(180deg, rgba(251, 191, 36, 0.9), rgba(245, 158, 11, 0.95)), url(${buttonGlows.primary})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
-            >
-              <RotateCw className="w-4 h-4" /> Play Again
-            </button>
-       </div>
-       </div>
-    </motion.div>
+      <PremiumCTA id="btn_play_again" onClick={onPlayAgain} icon={RotateCw}>Practice again</PremiumCTA>
+      <button id="btn_menu_after_game" type="button" onClick={onMenu}
+        className="sm-touch-target flex min-h-[48px] items-center justify-center gap-2 rounded-[16px] border border-[#3A678E] bg-[#0B1B3A] px-4 text-sm font-bold text-[#C6E3F7]">
+        Adjust my session <ArrowRight aria-hidden="true" className="h-4 w-4" />
+      </button>
+    </PremiumScreen>
   );
 };

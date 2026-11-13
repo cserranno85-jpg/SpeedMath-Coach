@@ -107,11 +107,11 @@ export default function App() {
 
   return (
     <div
-      className={`min-h-[100dvh] w-full relative bg-[#02081f] text-slate-900 font-sans tracking-tight flex justify-center selection:bg-cyan-200 overflow-x-hidden ${
+      className={`min-h-[100dvh] w-full relative bg-[#040c24] text-slate-100 font-sans tracking-tight flex justify-center selection:bg-cyan-200 overflow-x-hidden ${
         isExerciseScreen ? 'items-center overflow-hidden p-0' : 'items-start overflow-y-auto p-0'
       }`}
       style={{
-        backgroundImage: `radial-gradient(circle at 50% -12%, rgba(14, 165, 233, 0.22), transparent 42%), linear-gradient(180deg, rgba(2, 8, 31, 0.52), rgba(2, 8, 31, 0.88)), url(${screenBackground})`,
+        backgroundImage: `radial-gradient(circle at 50% -12%, rgba(14, 165, 233, 0.09), transparent 44%), linear-gradient(180deg, rgba(4, 12, 36, 0.90), rgba(4, 12, 36, 0.96)), url(${screenBackground})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
@@ -121,7 +121,7 @@ export default function App() {
          src={fx.mathParticles}
          alt=""
          aria-hidden="true"
-         className="absolute inset-0 h-full w-full object-cover opacity-[0.11] mix-blend-screen pointer-events-none"
+         className="absolute inset-0 h-full w-full object-cover opacity-[0.04] mix-blend-screen pointer-events-none"
        />
        
        <div className="relative z-10 w-full flex items-start justify-center">
