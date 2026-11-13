@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   BarChart3, Bolt, Home, LucideIcon, Settings, Sparkles,
-  Trophy, UserRound, Volume2, VolumeX, ArrowRight,
+  Trophy, UserRound, Volume2, VolumeX, ArrowRight, ArrowLeft,
 } from 'lucide-react';
 import { fx } from '../assets/uiAssetRegistry';
 
@@ -51,7 +51,9 @@ export const PremiumTopBar: React.FC<PremiumTopBarProps> = ({
       <button type="button" onClick={onPrimaryAction} disabled={!onPrimaryAction}
         aria-label={primaryTitle} title={primaryTitle}
         className="sm-touch-target grid h-12 w-12 place-items-center rounded-[14px] border border-[#34597B] bg-[#142C50] text-[#D9EEFF] disabled:opacity-50">
-        {muted ? <VolumeX aria-hidden="true" className="h-5 w-5" /> : <Volume2 aria-hidden="true" className="h-5 w-5" />}
+        {primaryTitle.toLowerCase().includes('back')
+          ? <ArrowLeft aria-hidden="true" className="h-5 w-5" />
+          : muted ? <VolumeX aria-hidden="true" className="h-5 w-5" /> : <Volume2 aria-hidden="true" className="h-5 w-5" />}
       </button>
       <button type="button" onClick={onSecondaryAction} disabled={!onSecondaryAction}
         aria-label={secondaryTitle} title={secondaryTitle}
