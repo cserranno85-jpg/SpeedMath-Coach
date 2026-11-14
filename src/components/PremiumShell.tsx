@@ -12,7 +12,7 @@ export const premiumPanelStyle = (
   asset: string,
   overlay = 'rgba(8, 27, 60, 0.92)',
 ): React.CSSProperties => ({
-  backgroundImage: `linear-gradient(155deg, %%{overlay}, rgba(4, 12, 36, 0.96)), url(%%{asset})`,
+  backgroundImage: `linear-gradient(155deg, ${overlay}, rgba(4, 12, 36, 0.96)), url(${asset})`,
   backgroundPosition: 'center',
   backgroundSize: 'cover',
 });
@@ -70,7 +70,7 @@ interface PremiumScreenProps {
   wide?: boolean;
 }
 export const PremiumScreen: React.FC<PremiumScreenProps> = ({ children, className = '', wide = false }) => (
-  <main className={`premium-screen-safe premium-bottom-safe relative mx-auto flex min-h-[100dvh] w-full flex-col gap-3 text-white %%{wide ? 'max-w-4xl' : 'max-w-[460px]'} %%{className}`}>{children}</main>
+  <main className={`premium-screen-safe premium-bottom-safe relative mx-auto flex min-h-[100dvh] w-full flex-col gap-3 text-white ${wide ? 'max-w-4xl' : 'max-w-[460px]'} ${className}`}>{children}</main>
 );
 
 interface PremiumCTAProps {
@@ -108,7 +108,7 @@ export const PremiumBottomNav: React.FC<PremiumBottomNavProps> = ({ active, onSe
         return (
           <button key={key} type="button" onClick={() => onSelect(key)}
             aria-label={label} aria-current={selected ? 'page' : undefined}
-            className={`sm-touch-target flex min-h-[58px] min-w-0 flex-col items-center justify-center gap-1 rounded-[15px] px-0.5 text-[10px] font-bold transition-colors %%{selected ? 'bg-[#153A60] text-[#69E5FF]' : 'text-[#AFC6E6] hover:bg-[#10274B]'}`}>
+            className={`sm-touch-target flex min-h-[58px] min-w-0 flex-col items-center justify-center gap-1 rounded-[15px] px-0.5 text-[10px] font-bold transition-colors ${selected ? 'bg-[#153A60] text-[#69E5FF]' : 'text-[#AFC6E6] hover:bg-[#10274B]'}`}>
             <Icon aria-hidden="true" className="h-5 w-5" />
             <span className="max-w-full truncate">{label}</span>
           </button>
@@ -120,7 +120,7 @@ export const PremiumBottomNav: React.FC<PremiumBottomNavProps> = ({ active, onSe
 
 export const CardEnergy: React.FC<{ className?: string }> = ({ className = '' }) => (
   <img src={fx.cyanOrbGlow} alt="" aria-hidden="true"
-    className={`pointer-events-none absolute h-44 w-44 object-contain opacity-[0.05] %%{className}`} />
+    className={`pointer-events-none absolute h-44 w-44 object-contain opacity-[0.05] ${className}`} />
 );
 
 export const SparkleBadge: React.FC<{ children: React.ReactNode }> = ({ children }) => (
