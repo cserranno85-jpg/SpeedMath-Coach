@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - speedmath-coach-external-gradle-build-v1
+      - feat/speedmath-figma-ui-refresh-20261112
 
 permissions:
   contents: read
@@ -42,6 +43,12 @@ jobs:
 
       - name: GPCG-001 artifact identity falsification tests
         run: node --test tests/gpcg-001-build-identity.test.mjs
+
+      - name: UI and privacy regression tests (includes rendered component checks)
+        run: node --test tests/gpcg-001-privacy-backup.test.mjs tests/speedmath-figma-ui.test.mjs tests/speedmath-premium-shell-render.test.mjs
+
+      - name: TypeScript type validation
+        run: npm run lint
 
       - name: Generate SpeedMath Coach brand assets
         run: npm run generate:brand-assets
