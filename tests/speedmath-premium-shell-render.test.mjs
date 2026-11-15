@@ -70,3 +70,13 @@ test('energy decoration forwards caller class without literal placeholders', asy
   assert.match(markup, /test-energy-offset/);
   assert.doesNotMatch(markup, /%%\{/);
 });
+
+test('Badges is a selected accessible destination, while Daily Arena has no false selection', async () => {
+  const { PremiumBottomNav } = await loadShell();
+  const badges = renderToStaticMarkup(React.createElement(PremiumBottomNav, { active: 'badges', onSelect: () => {} }));
+  const arena = renderToStaticMarkup(React.createElement(PremiumBottomNav, { active: null, onSelect: () => {} }));
+  assert.match(badges, /aria-label="Badges" aria-current="page"/);
+  assert.equal((badges.match(/aria-current="page"/g) || []).length, 1);
+  assert.equal((arena.match(/aria-current="page"/g) || []).length, 0);
+});
+

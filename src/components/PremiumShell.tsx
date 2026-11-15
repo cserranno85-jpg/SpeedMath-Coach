@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { fx } from '../assets/uiAssetRegistry';
 
-export type PremiumNavKey = 'home' | 'practice' | 'progress' | 'challenges' | 'profile';
+export type PremiumNavKey = 'home' | 'practice' | 'progress' | 'badges' | 'profile';
 
 /** Keep the asset parameter for downstream callers; a quieter overlay avoids visual noise. */
 export const premiumPanelStyle = (
@@ -92,11 +92,11 @@ const navItems: Array<{ key: PremiumNavKey; label: string; icon: LucideIcon }> =
   { key: 'home', label: 'Home', icon: Home },
   { key: 'practice', label: 'Practice', icon: Bolt },
   { key: 'progress', label: 'Progress', icon: BarChart3 },
-  { key: 'challenges', label: 'Badges', icon: Trophy },
+  { key: 'badges', label: 'Badges', icon: Trophy },
   { key: 'profile', label: 'Profile', icon: UserRound },
 ];
 interface PremiumBottomNavProps {
-  active: PremiumNavKey;
+  active: PremiumNavKey | null;
   onSelect: (key: PremiumNavKey) => void;
 }
 export const PremiumBottomNav: React.FC<PremiumBottomNavProps> = ({ active, onSelect }) => (

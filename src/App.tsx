@@ -12,7 +12,7 @@ import { Badge } from './utils/streakAndAchievements';
 import { backgrounds, fx } from './assets/uiAssetRegistry';
 import { sounds } from './utils/soundEngine';
 
-type AppState = 'HOME' | 'PRACTICE' | 'PLAYING' | 'GAMEOVER' | 'PROGRESS' | 'PROFILE' | 'CHALLENGES' | 'PRIVACY';
+type AppState = 'HOME' | 'PRACTICE' | 'PLAYING' | 'GAMEOVER' | 'PROGRESS' | 'BADGES' | 'PROFILE' | 'CHALLENGES' | 'PRIVACY';
 
 const DEFAULT_SETTINGS: Settings = {
   difficulty: Difficulty.BEGINNER,
@@ -100,7 +100,7 @@ export default function App() {
   const screenBackground =
     appState === 'PLAYING' || appState === 'PRACTICE'
       ? backgrounds.exercise
-      : appState === 'PROGRESS' || appState === 'PROFILE' || appState === 'CHALLENGES' || appState === 'PRIVACY'
+      : appState === 'PROGRESS' || appState === 'BADGES' || appState === 'PROFILE' || appState === 'CHALLENGES' || appState === 'PRIVACY'
       ? backgrounds.profile
       : backgrounds.home;
   const isExerciseScreen = appState === 'PLAYING';
@@ -183,16 +183,16 @@ export default function App() {
                  </motion.div>
              )}
 
-             {appState === 'PROGRESS' && (
+             {(appState === 'PROGRESS' || appState === 'BADGES') && (
                  <motion.div
-                   key="progress"
+                   key={appState.toLowerCase()}
                    initial={{ opacity: 0, y: 30 }}
                    animate={{ opacity: 1, y: 0 }}
                    exit={{ opacity: 0, y: -20 }}
                    transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                    className="w-full flex justify-center"
                  >
-                    <Stats onBack={() => navigateTo('HOME')} onStartGame={handleStartGame} onNavigate={navigateTo} />
+                    <Stats view={appState === 'BADGES' ? 'badges' : 'progress'} onBack={() => navigateTo('HOME')} onStartGame={handleStartGame} onNavigate={navigateTo} />
                  </motion.div>
              )}
 

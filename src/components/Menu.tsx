@@ -16,7 +16,7 @@ interface MenuProps {
   settings: SettingsType;
   onSettingsChange: (newSettings: SettingsType) => void;
   onStartGame: () => void;
-  onNavigate?: (state: 'HOME' | 'PRACTICE' | 'PROGRESS' | 'PROFILE' | 'CHALLENGES' | 'PRIVACY') => void;
+  onNavigate?: (state: 'HOME' | 'PRACTICE' | 'PROGRESS' | 'PROFILE' | 'BADGES' | 'CHALLENGES' | 'PRIVACY') => void;
   initialTab?: 'DASHBOARD' | 'SETTINGS';
   activeNav?: PremiumNavKey;
 }
@@ -85,7 +85,7 @@ export const Menu: React.FC<MenuProps> = ({
       operations: { ...settings.operations, [operation]: !settings.operations[operation] },
     });
   };
-  const go = (target: PremiumNavKey) => {
+  const go = (target: PremiumNavKey | 'challenges') => {
     sounds.playClick();
     if (target === 'home') {
       setActiveTab('DASHBOARD');
@@ -95,6 +95,7 @@ export const Menu: React.FC<MenuProps> = ({
       onNavigate?.('PRACTICE');
     } else if (target === 'progress') onNavigate?.('PROGRESS');
     else if (target === 'profile') onNavigate?.('PROFILE');
+    else if (target === 'badges') onNavigate?.('BADGES');
     else if (target === 'challenges') onNavigate?.('CHALLENGES');
   };
   const selectedNav = activeNav ?? (activeTab === 'SETTINGS' ? 'practice' : 'home');

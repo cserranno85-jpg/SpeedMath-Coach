@@ -54,3 +54,24 @@ test('clean palette and reduced motion are implemented without new packages', ()
   const config = JSON.parse(read('../package.json'));
   assert.equal(config.dependencies['@capacitor/core'] != null, true);
 });
+
+test('Badges tab routes to existing achievement gallery; Daily Arena remains a distinct action', () => {
+  const shell = read('../src/components/PremiumShell.tsx');
+  const app = read('../src/App.tsx');
+  const menu = read('../src/components/Menu.tsx');
+  const stats = read('../src/components/Stats.tsx');
+  const profile = read('../src/components/Profile.tsx');
+  const challenges = read('../src/components/Challenges.tsx');
+  assert.match(shell, /\{ key: 'badges', label: 'Badges', icon: Trophy \}/);
+  assert.doesNotMatch(shell, /\{ key: 'challenges', label: 'Badges'/);
+  assert.match(app, /appState === 'BADGES'/);
+  assert.match(app, /view=\{appState === 'BADGES' \? 'badges' : 'progress'\}/);
+  assert.match(stats, /id="achievements_section"/);
+  assert.match(stats, /id="badges_page_title"/);
+  assert.match(stats, /active=\{view === 'badges' \? 'badges' : 'progress'\}/);
+  assert.match(menu, /target === 'badges'\) onNavigate\?\.\('BADGES'\)/);
+  assert.match(menu, /target === 'challenges'\) onNavigate\?\.\('CHALLENGES'\)/);
+  for (const other of [profile, challenges]) assert.match(other, /onNavigate\('BADGES'\)/);
+  assert.match(challenges, /active=\{null\}/);
+});
+
