@@ -40,7 +40,7 @@ interface MenuProps {
   settings: SettingsType;
   onSettingsChange: (newSettings: SettingsType) => void;
   onStartGame: () => void;
-  onNavigate?: (state: 'HOME' | 'PRACTICE' | 'PROGRESS' | 'PROFILE' | 'CHALLENGES') => void;
+  onNavigate?: (state: 'HOME' | 'PRACTICE' | 'PROGRESS' | 'PROFILE' | 'CHALLENGES' | 'PRIVACY') => void;
   initialTab?: 'DASHBOARD' | 'SETTINGS';
   activeNav?: PremiumNavKey;
 }
@@ -523,6 +523,17 @@ export const Menu: React.FC<MenuProps> = ({
                   Play
                 </button>
               </div>
+              <button
+                id="btn_privacy_policy"
+                type="button"
+                onClick={() => {
+                  sounds.playClick();
+                  onNavigate?.('PRIVACY');
+                }}
+                className="relative z-10 w-full min-h-[48px] rounded-xl border border-cyan-200/30 bg-slate-950/60 px-4 py-3 text-center text-sm font-semibold text-cyan-100 underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+              >
+                Privacy Policy
+              </button>
             </div>
           </section>
         )}
