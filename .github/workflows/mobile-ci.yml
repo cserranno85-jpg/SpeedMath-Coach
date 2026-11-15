@@ -40,8 +40,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: GPCG-001 artifact identity falsification tests
-        run: node --test tests/gpcg-001-build-identity.test.mjs
+      - name: GPCG-001 build identity and privacy/backup regression suites
+        run: node --test tests/gpcg-001-build-identity.test.mjs tests/gpcg-001-privacy-backup.test.mjs
 
       - name: Generate SpeedMath Coach brand assets
         run: npm run generate:brand-assets
@@ -62,6 +62,43 @@ jobs:
           curl -L -o gradle.zip "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
           unzip -q gradle.zip
           "./gradle-${GRADLE_VERSION}/bin/gradle" -p android :app:assembleDebug --stacktrace
+
+      - name: GPCG-001 verify compiled Android backup and device-transfer exclusions
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          AAPT2="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt2 | sort -V | tail -1)"
+          test -f "$APK"
+          test -n "$AAPT2"
+          "$AAPT2" dump xmltree --file AndroidManifest.xml "$APK" > "$RUNNER_TEMP/speedmath-compiled-manifest.txt"
+          "$AAPT2" dump xmltree --file res/xml/data_extraction_rules.xml "$APK" > "$RUNNER_TEMP/speedmath-compiled-data-rules.txt"
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const manifest = fs.readFileSync(process.env.RUNNER_TEMP + '/speedmath-compiled-manifest.txt', 'utf8');
+          const rules = fs.readFileSync(process.env.RUNNER_TEMP + '/speedmath-compiled-data-rules.txt', 'utf8');
+          assert.match(manifest, /:allowBackup\([^)]*\)=false/);
+          assert.match(manifest, /:fullBackupContent\([^)]*\)=false/);
+          assert.match(manifest, /:dataExtractionRules\([^)]*\)=@/);
+          const found = {'cloud-backup': new Set(), 'device-transfer': new Set()};
+          let section = null;
+          let domain = null;
+          for (const line of rules.split(/\r?\n/)) {
+            const start = line.match(/E: (cloud-backup|device-transfer) \(line=/);
+            if (start) { section = start[1]; domain = null; continue; }
+            if (/E: exclude \(line=/.test(line)) { domain = null; continue; }
+            const domainMatch = line.match(/A: domain="(root|device_root)"/);
+            if (domainMatch) { domain = domainMatch[1]; continue; }
+            const pathMatch = line.match(/A: path="([^"]+)"/);
+            if (section && domain && pathMatch) { found[section].add(domain + ':' + pathMatch[1]); }
+          }
+          for (const [mode, excluded] of Object.entries(found)) {
+            assert.ok(excluded.has('root:.'), mode + ' must exclude credential-protected root');
+            assert.ok(excluded.has('device_root:.'), mode + ' must exclude device-protected root');
+          }
+          console.log('Compiled Android backup and device-transfer rules PASS (not a physical transfer test).');
+          NODE
 
       - name: Verify PNG signatures after asset generation
         shell: bash
