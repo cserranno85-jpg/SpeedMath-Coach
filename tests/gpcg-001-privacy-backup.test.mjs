@@ -39,3 +39,16 @@ test('public privacy-policy copy discloses retention and OS migration caveat', (
   assert.match(policy, /Operating-system and device-manufacturer behavior may vary/);
   assert.match(policy, /Locally stored progress and preferences remain/);
 });
+
+test('public and offline privacy policies distinguish version codes 7 and 8', () => {
+  const publicPolicy = read('../docs/privacy.html');
+  const offlinePolicy = read('../src/components/PrivacyPolicy.tsx');
+  for (const [name, policy] of [['public', publicPolicy], ['offline', offlinePolicy]]) {
+    assert.match(policy, /June 6, 2026/, name + ' must retain original effective date');
+    assert.match(policy.replace(/<\/?strong>/g, ''), /Last revised: November 14, 2026/, name + ' must show actual revision date');
+    assert.match(policy, /version code 7/, name + ' must disclose v7 separately');
+    assert.match(policy, /version code 8/, name + ' must disclose v8 separately');
+    assert.match(policy, /only (?:if|when) version code 8 is installed/, name + ' must gate backup rules on installed code');
+    assert.match(policy, /Operating-system and device-manufacturer|operating-system and manufacturer/, name + ' must retain manufacturer caveat');
+  }
+});
