@@ -12,7 +12,7 @@ import { Badge } from './utils/streakAndAchievements';
 import { backgrounds, fx } from './assets/uiAssetRegistry';
 import { sounds } from './utils/soundEngine';
 
-type AppState = 'HOME' | 'PRACTICE' | 'PLAYING' | 'GAMEOVER' | 'PROGRESS' | 'PROFILE' | 'CHALLENGES' | 'PRIVACY';
+type AppState = 'HOME' | 'PRACTICE' | 'PLAYING' | 'GAMEOVER' | 'PROGRESS' | 'BADGES' | 'PROFILE' | 'CHALLENGES' | 'PRIVACY';
 
 const DEFAULT_SETTINGS: Settings = {
   difficulty: Difficulty.BEGINNER,
@@ -100,18 +100,18 @@ export default function App() {
   const screenBackground =
     appState === 'PLAYING' || appState === 'PRACTICE'
       ? backgrounds.exercise
-      : appState === 'PROGRESS' || appState === 'PROFILE' || appState === 'CHALLENGES' || appState === 'PRIVACY'
+      : appState === 'PROGRESS' || appState === 'BADGES' || appState === 'PROFILE' || appState === 'CHALLENGES' || appState === 'PRIVACY'
       ? backgrounds.profile
       : backgrounds.home;
   const isExerciseScreen = appState === 'PLAYING';
 
   return (
     <div
-      className={`min-h-[100dvh] w-full relative bg-[#02081f] text-slate-900 font-sans tracking-tight flex justify-center selection:bg-cyan-200 overflow-x-hidden ${
+      className={`min-h-[100dvh] w-full relative bg-[#040c24] text-slate-100 font-sans tracking-tight flex justify-center selection:bg-cyan-200 overflow-x-hidden ${
         isExerciseScreen ? 'items-center overflow-hidden p-0' : 'items-start overflow-y-auto p-0'
       }`}
       style={{
-        backgroundImage: `radial-gradient(circle at 50% -12%, rgba(14, 165, 233, 0.22), transparent 42%), linear-gradient(180deg, rgba(2, 8, 31, 0.52), rgba(2, 8, 31, 0.88)), url(${screenBackground})`,
+        backgroundImage: `radial-gradient(circle at 50% -12%, rgba(14, 165, 233, 0.09), transparent 44%), linear-gradient(180deg, rgba(4, 12, 36, 0.90), rgba(4, 12, 36, 0.96)), url(${screenBackground})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
@@ -121,7 +121,7 @@ export default function App() {
          src={fx.mathParticles}
          alt=""
          aria-hidden="true"
-         className="absolute inset-0 h-full w-full object-cover opacity-[0.11] mix-blend-screen pointer-events-none"
+         className="absolute inset-0 h-full w-full object-cover opacity-[0.04] mix-blend-screen pointer-events-none"
        />
        
        <div className="relative z-10 w-full flex items-start justify-center">
@@ -183,16 +183,16 @@ export default function App() {
                  </motion.div>
              )}
 
-             {appState === 'PROGRESS' && (
+             {(appState === 'PROGRESS' || appState === 'BADGES') && (
                  <motion.div
-                   key="progress"
+                   key={appState.toLowerCase()}
                    initial={{ opacity: 0, y: 30 }}
                    animate={{ opacity: 1, y: 0 }}
                    exit={{ opacity: 0, y: -20 }}
                    transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                    className="w-full flex justify-center"
                  >
-                    <Stats onBack={() => navigateTo('HOME')} onStartGame={handleStartGame} onNavigate={navigateTo} />
+                    <Stats view={appState === 'BADGES' ? 'badges' : 'progress'} onBack={() => navigateTo('HOME')} onStartGame={handleStartGame} onNavigate={navigateTo} />
                  </motion.div>
              )}
 

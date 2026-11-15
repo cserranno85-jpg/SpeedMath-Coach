@@ -44,12 +44,13 @@ import {
 } from './PremiumShell';
 
 interface StatsProps {
+  view?: 'progress' | 'badges';
   onBack: () => void;
   onStartGame: () => void;
-  onNavigate: (state: 'HOME' | 'PRACTICE' | 'PROGRESS' | 'PROFILE' | 'CHALLENGES') => void;
+  onNavigate: (state: 'HOME' | 'PRACTICE' | 'PROGRESS' | 'PROFILE' | 'BADGES' | 'CHALLENGES') => void;
 }
 
-export const Stats: React.FC<StatsProps> = ({ onBack, onStartGame, onNavigate }) => {
+export const Stats: React.FC<StatsProps> = ({ view = 'progress', onBack, onStartGame, onNavigate }) => {
   const [progress, setProgress] = useState<any[]>([]);
   const [badges, setBadges] = useState<Badge[]>([]);
 
@@ -136,8 +137,10 @@ export const Stats: React.FC<StatsProps> = ({ onBack, onStartGame, onNavigate })
       onBack();
     } else if (key === 'practice') {
       onNavigate('PRACTICE');
-    } else if (key === 'challenges') {
-      onNavigate('CHALLENGES');
+    } else if (key === 'progress') {
+      onNavigate('PROGRESS');
+    } else if (key === 'badges') {
+      onNavigate('BADGES');
     } else if (key === 'profile') {
       onNavigate('PROFILE');
     }
@@ -174,6 +177,8 @@ export const Stats: React.FC<StatsProps> = ({ onBack, onStartGame, onNavigate })
     },
   ];
 
+  const AchievementHeading = view === 'badges' ? 'h2' : 'h3';
+
   return (
     <>
       <PremiumScreen wide>
@@ -198,6 +203,18 @@ export const Stats: React.FC<StatsProps> = ({ onBack, onStartGame, onNavigate })
           Back to Menu
         </button>
 
+        {view === 'badges' && (
+          <header className={`${PremiumGlassClass} mt-4 p-5`} aria-labelledby="badges_page_title">
+            <p className={labelClass + ' text-[#69E5FF]'}>Achievement collection</p>
+            <h1 id="badges_page_title" className="mt-2 text-3xl font-black tracking-tight text-white">Badges</h1>
+            <p className="mt-2 text-sm leading-relaxed text-cyan-100/70">
+              Review the badges you have unlocked and your progress toward the next achievement.
+            </p>
+          </header>
+        )}
+
+        {view === 'progress' && (
+          <>
         <section
           className={`${PremiumGlassClass} mt-4 p-4`}
           style={premiumPanelStyle(panels.cosmicCard, 'rgba(7, 13, 34, 0.78)')}
@@ -322,10 +339,13 @@ export const Stats: React.FC<StatsProps> = ({ onBack, onStartGame, onNavigate })
           )}
         </section>
 
+          </>
+        )}
+
         <section id="achievements_section" className={`${PremiumGlassClass} mt-4 p-4`} style={premiumPanelStyle(panels.cosmicCard, 'rgba(7, 13, 34, 0.82)')}>
           <div className="mb-4 flex items-center gap-2">
             <Trophy className="h-5 w-5 text-yellow-300" />
-            <h3 className={`${labelClass} text-cyan-300`}>Achievements</h3>
+            <AchievementHeading className={`${labelClass} text-cyan-300`}>Achievements</AchievementHeading>
             <span className="ml-auto rounded-full border border-cyan-100/15 bg-cyan-300/12 px-2.5 py-1 font-mono text-[10px] font-bold text-cyan-100">
               {unlockedCount} / {badges.length}
             </span>
@@ -393,7 +413,7 @@ export const Stats: React.FC<StatsProps> = ({ onBack, onStartGame, onNavigate })
           </div>
         </section>
       </PremiumScreen>
-      <PremiumBottomNav active="progress" onSelect={handleNavSelect} />
+      <PremiumBottomNav active={view === 'badges' ? 'badges' : 'progress'} onSelect={handleNavSelect} />
     </>
   );
 };

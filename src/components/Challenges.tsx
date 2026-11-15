@@ -17,7 +17,7 @@ import {
 
 interface ChallengesProps {
   onStartGame: () => void;
-  onNavigate: (state: 'HOME' | 'PRACTICE' | 'PROGRESS' | 'PROFILE' | 'CHALLENGES') => void;
+  onNavigate: (state: 'HOME' | 'PRACTICE' | 'PROGRESS' | 'PROFILE' | 'BADGES' | 'CHALLENGES') => void;
 }
 
 export const Challenges: React.FC<ChallengesProps> = ({ onStartGame, onNavigate }) => {
@@ -27,6 +27,7 @@ export const Challenges: React.FC<ChallengesProps> = ({ onStartGame, onNavigate 
     if (key === 'practice') onNavigate('PRACTICE');
     if (key === 'progress') onNavigate('PROGRESS');
     if (key === 'profile') onNavigate('PROFILE');
+    if (key === 'badges') onNavigate('BADGES');
   };
 
   return (
@@ -96,7 +97,7 @@ export const Challenges: React.FC<ChallengesProps> = ({ onStartGame, onNavigate 
           Start SpeedMath Drill
         </PremiumCTA>
       </PremiumScreen>
-      <PremiumBottomNav active="challenges" onSelect={handleNavSelect} />
+      <PremiumBottomNav active={null} onSelect={handleNavSelect} />
     </>
   );
 };

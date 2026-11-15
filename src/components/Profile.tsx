@@ -18,7 +18,7 @@ import {
 
 interface ProfileProps {
   onStartGame: () => void;
-  onNavigate: (state: 'HOME' | 'PRACTICE' | 'PROGRESS' | 'PROFILE' | 'CHALLENGES') => void;
+  onNavigate: (state: 'HOME' | 'PRACTICE' | 'PROGRESS' | 'PROFILE' | 'BADGES' | 'CHALLENGES') => void;
 }
 
 export const Profile: React.FC<ProfileProps> = ({ onStartGame, onNavigate }) => {
@@ -54,7 +54,7 @@ export const Profile: React.FC<ProfileProps> = ({ onStartGame, onNavigate }) => 
     if (key === 'home') onNavigate('HOME');
     if (key === 'practice') onNavigate('PRACTICE');
     if (key === 'progress') onNavigate('PROGRESS');
-    if (key === 'challenges') onNavigate('CHALLENGES');
+    if (key === 'badges') onNavigate('BADGES');
   };
 
   const profileStats = [
