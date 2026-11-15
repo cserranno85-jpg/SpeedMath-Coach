@@ -23,6 +23,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => (
         <h1 id="privacy-policy-title" className="text-2xl font-black text-white">Privacy Policy</h1>
         <p className="mt-2 text-cyan-100/75">SpeedMath Coach · Caivra Tech LLC</p>
         <p className="text-xs text-cyan-100/60">Effective date: June 6, 2026</p>
+        <p className="text-xs text-cyan-100/60">Last revised: November 14, 2026</p>
       </header>
       <section aria-labelledby="privacy-overview">
         <h2 id="privacy-overview" className="text-base font-bold text-cyan-200">Overview</h2>
@@ -34,7 +35,8 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => (
       </section>
       <section aria-labelledby="privacy-local">
         <h2 id="privacy-local" className="text-base font-bold text-cyan-200">Local App Activity</h2>
-        <p>Exercise progress, scores, settings, and sound preferences are stored locally on your device. The app does not provide cloud syncing. On Android, the app opts out of automatic cloud backup and requests exclusion of app data from device-to-device transfers; operating-system and device-manufacturer behavior may vary.</p>
+        <p>Exercise progress, scores, settings, and sound preferences are stored locally on your device. The app does not provide cloud syncing.</p>
+        <p>Android build version code 7 (version name 1.1.1) does not contain the backup and transfer exclusions added for version code 8. Version code 7's backup and device-transfer behavior may depend on Android and the device manufacturer. Android build version code 8 is configured to disable automatic Android cloud backup and request exclusion of app data from Android-to-Android device transfers. Those controls apply only when version code 8 is installed and do not retroactively change version code 7. Version-8 availability depends on Google Play distribution; operating-system and manufacturer transfer behavior may vary.</p>
         <p>Local progress may be lost if you uninstall the app, clear its data, or replace or reset your device.</p>
       </section>
       <section aria-labelledby="privacy-retention">
