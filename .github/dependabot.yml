@@ -1,0 +1,13 @@
+# GitHub Actions only; no runtime/app dependency changes.
+# A low-frequency public-repository supply-chain review pilot.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      time: "09:00"
+      timezone: "America/Los_Angeles"
+    open-pull-requests-limit: 1
+    commit-message:
+      prefix: "chore(actions)"
